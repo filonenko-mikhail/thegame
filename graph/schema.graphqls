@@ -1,0 +1,58 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+directive @goField(
+	forceResolver: Boolean
+	name: String
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
+
+type DiceQueries {
+  val: Int! @goField(forceResolver: true)
+}
+
+type DiceMutations {
+  set(val:Int!): Int! @goField(forceResolver: true)
+}
+
+type Card {
+  id: ID!
+  text: String!
+  x: Float!
+  y: Float!
+  color: Int
+}
+
+input CardAddPayload {
+  id: ID!
+  text: String!
+  x: Float!
+  y: Float!
+  color: Int
+}
+
+input CardMovePayload {
+  id: ID!
+  x: Float!
+  y: Float!
+}
+
+type CardQueries {
+  list: [Card!]! @goField(forceResolver: true)
+}
+
+type CardMutations {
+  add(payload: CardAddPayload!): Card! @goField(forceResolver: true)
+  move(payload: CardMovePayload): Card! @goField(forceResolver: true)
+  delete(id: ID): Card! @goField(forceResolver: true)
+}
+
+type Query {
+  dice: DiceQueries!
+  card: CardQueries!
+}
+
+type Mutation {
+  dice: DiceMutations!
+  card: CardMutations!
+}

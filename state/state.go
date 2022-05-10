@@ -12,9 +12,6 @@ import (
 	"nhooyr.io/websocket/wsjson"
 )
 
-type Event struct {
-	
-}
 
 type ClientInfo struct {
 	Id string;

@@ -4,11 +4,20 @@ import (
 	"context"
 	"database/sql"
 	"net/http"
+	"sync"
+	"thegame/graph"
+	"thegame/graph/generated"
+	"thegame/graph/model"
 	"thegame/state"
 
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/go-chi/chi"
 	"github.com/sirupsen/logrus"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
+
+	"github.com/rs/cors"
 
 	"github.com/spf13/cobra"
 
@@ -62,7 +71,6 @@ func serve(cmd *cobra.Command, args []string) error {
 	logrus.Print("Database opened")
 
 	logrus.Print("Applying migrations...")
-	
 	driver, err := sqlite.WithInstance(db, &sqlite.Config{})
 	if err != nil {
 		return err
@@ -83,16 +91,66 @@ func serve(cmd *cobra.Command, args []string) error {
 	game = state.Get()
 	game.Db = db;
 
-	mux := http.NewServeMux()
+	router := chi.NewRouter()
+	router.Use(cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowCredentials: true,
+		Debug:            false,
+	}).Handler)
 
-	mux.HandleFunc("/ws", serveWs)
+	resolver := graph.Resolver{
+		Db: db,
+		Dice: 1,
+		Card: sync.Map{}}
+	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &resolver}))
+			
+	rows, err := db.QueryContext(context.Background(), `SELECT card_id, body, x, y, color FROM cards`)
+	if err != nil {
+		logrus.Info(err)
+		return err
+	}
+	defer rows.Close()
+
+	var (
+		cardId string;
+		body string;
+		x float64;
+		y float64;
+		color sql.NullInt32;
+	)
+	for rows.Next() {
+		err := rows.Scan(&cardId, &body, &x, &y, &color)
+		if err != nil {
+			logrus.Info(err)
+			break
+		}
+		item := model.Card{
+			ID: cardId,
+			Text: body,
+			X: x,
+			Y: y,
+		}
+		if color.Valid {
+			val := int(color.Int32)
+			item.Color = &val
+		}
+		resolver.Card.Store(cardId, &item)
+	}
+
+
+	router.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
+	router.Handle("/query", srv)
+	router.HandleFunc("/ws", serveWs)
+
+	fs := http.FileServer(http.Dir("myapp/build/web/"))
+	router.Handle("/*", fs);
 
 	httpAddr, err := cmd.Flags().GetString("http-addr")
 	if err != nil {
 		return err
 	}
 	logrus.Printf("Listening tranformations http://%s", httpAddr)
-	return http.ListenAndServe(httpAddr, mux)
+	return http.ListenAndServe(httpAddr, router)
 }  
 
 func main() {

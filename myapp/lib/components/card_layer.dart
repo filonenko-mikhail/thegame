@@ -1,44 +1,45 @@
-import 'package:flutter/material.dart';
 
 import 'package:logger/logger.dart';
 
-import 'package:flame/game.dart';
 import 'package:flame/components.dart';
 import 'package:flame/effects.dart';
-import 'package:flame/input.dart';
 import 'package:flame_bloc/flame_bloc.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../game/state.dart';
 import '../game/game.dart';
+import '../game/card_state.dart';
+import 'card.dart';
+
 
 var logger = Logger();
 
 class CardLayer extends PositionComponent
-  with BlocComponent<GameBloc, GameState>, 
+  with BlocComponent<CardBloc, CardState>,
   HasGameRef<MyGame> {
 
-  Map<String, PositionComponent> cards = {};
+  Map<String, Card> cards = {};
 
   @override
-  void onNewState(GameState state) {
-    logger.i('NEW STATE FROM LAYER');
-    state.cards.forEach((k, v) {
-      
-        if (!cards.containsKey(k)) {
-          cards[k] = RectangleComponent(size: Vector2(100, 100));
-          logger.i('New card ${cards[k]}');
-          add(cards[k]!);
-        }
-
-        position = Vector2(v['x'], v['y']);
-        final effect = MoveEffect.to(position, EffectController(duration: 0.1));
-        effect.target = cards[k]!;
-        cards[k]!.add(effect);
-      }
-    );
+  void onNewState(CardState state) {
+    state.clientCards.forEach(handleCardState);
   }
 
+  void handleCardState(String k, CardModel v) {
+    Card card;
+    if (!cards.containsKey(k)) {
+      card = Card(k, v.color, text: v.text);
+      cards[k] = card;
+      add(card);
+    } else {
+      card = cards[k]!;
+    }
+
+    Vector2 pos = Vector2(v.x, v.y);
+    if (card.position != pos && !card.isDragged) {
+      final effect = MoveEffect.to(pos, EffectController(duration: 0.1));  
+      card.add(effect);
+    }
+  }
+  
   @override
   void onGameResize(Vector2 gameSize) {
     super.onGameResize(gameSize);

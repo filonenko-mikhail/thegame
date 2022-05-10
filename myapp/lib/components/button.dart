@@ -1,18 +1,15 @@
-import 'dart:ui';
-
 import 'package:logger/logger.dart';
 
 import 'package:flutter/material.dart';
 
 import 'package:flame/components.dart';
 import 'package:flame/input.dart';
-import '../game/game.dart';
+import 'package:flame_bloc/flame_bloc.dart';
 
 var logger = Logger();
 
-class PushButton extends PositionComponent 
-  with Tappable, Hoverable,
-  HasGameRef<MyGame> {
+class PushButton extends HudMarginComponent<FlameBlocGame> 
+  with Tappable, Hoverable {
 
   static final TextPaint regularTextPaint = TextPaint(
     style: const TextStyle(color: Colors.black87)
@@ -28,12 +25,14 @@ class PushButton extends PositionComponent
   String title;
   Function? callback;
 
-  PushButton(this.title):super();
+  PushButton(this.title, {
+    EdgeInsets? margin,
+    Vector2? size,
+  }):super(margin:margin, size:size);
 
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-    canvas.drawRect(Rect.fromPoints(Offset.zero, size.toOffset()), Paint()..color=Colors.black38);
     if (!isHovered || tapdown) {
       regularTextPaint.render(canvas, title, size/2, 
       anchor: Anchor.center);
@@ -41,15 +40,6 @@ class PushButton extends PositionComponent
       hoverTextPaint.render(canvas, title, size/2, 
       anchor: Anchor.center);
     }
-  }
-
-  @override
-  bool containsPoint(Vector2 point) {
-    var local = gameRef.camera.worldToScreen(point) - absoluteTopLeftPosition;
-    return (local.x >= 0) &&
-        (local.y >= 0) &&
-        (local.x < size.x) &&
-        (local.y < size.y);
   }
 
   @override

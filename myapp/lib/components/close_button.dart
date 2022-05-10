@@ -5,44 +5,48 @@ import 'package:flame/components.dart';
 import 'package:flame/input.dart';
 
 class CloseButton extends PositionComponent with Tappable {
-  double _radius;
   double _angle;
-  double _velocity;
-  CloseButton(double radius, {Vector2? position})
-      : _radius = radius,
-        _angle = 0,
-        _velocity = 0,
+  double velocity;
+  final paint = Paint();
+  final fillPaint = Paint()..style = PaintingStyle.fill;
+  final strokePaint = Paint()..style = PaintingStyle.stroke;
+
+  CloseButton({Vector2? position})
+      : _angle = 0,
+        velocity = 0,
         super(
           position: position,
-          anchor: Anchor.center,
         );
 
   @override
   void render(Canvas canvas) {
     super.render(canvas);
 
+    double radius = min(size.x/2, size.y/2);
+
     canvas.drawCircle(
-        Offset(0, 0),
-        _radius,
+        (size/2).toOffset(),
+        radius,
         Paint()
           ..style = PaintingStyle.fill
           ..color = Color(0xffFFFFFF));
-    canvas.drawLine(Offset(-_radius / 2, -_radius / 2),
-        Offset(_radius / 2, _radius / 2), Paint());
-    canvas.drawLine(Offset(-_radius / 2, _radius / 2),
-        Offset(_radius / 2, -_radius / 2), Paint());
 
-    canvas.drawArc(Rect.fromCircle(center: Offset(0, 0), radius: _radius), 0,
-        _angle, true, Paint()..style = PaintingStyle.fill);
+    canvas.drawLine(Offset(radius / 2, radius / 2),
+        Offset(radius + radius / 2 , radius + radius / 2), paint);
+
+    canvas.drawLine(Offset(radius / 2, radius + radius / 2),
+        Offset(radius + radius / 2, radius / 2), paint);
+
+    canvas.drawArc(Rect.fromCircle(center: (size/2).toOffset(), radius: radius), 0, _angle, true, fillPaint);
 
     canvas.drawCircle(
-        Offset(0, 0), _radius, Paint()..style = PaintingStyle.stroke);
+        (size/2).toOffset(), radius, strokePaint);
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    _angle += _velocity;
+    _angle += velocity;
     if (_angle > 2 * pi) {
       parent?.removeFromParent();
     }
@@ -51,25 +55,26 @@ class CloseButton extends PositionComponent with Tappable {
   @override
   bool containsPoint(Vector2 point) {
     final Vector2 local = absoluteToLocal(point);
-    return local.x * local.x + local.y * local.y < _radius * _radius;
+    double radius = min(size.x, size.y);
+    return local.x * local.x + local.y * local.y < radius * radius;
   }
 
   @override
   bool onTapDown(TapDownInfo event) {
-    _velocity = 3 * pi / 360;
+    velocity = 3 * pi / 360;
     return false;
   }
 
   @override
   bool onTapUp(TapUpInfo event) {
-    _velocity = 0;
+    velocity = 0;
     _angle = 0;
     return false;
   }
 
   @override
   bool onTapCancel() {
-    _velocity = 0;
+    velocity = 0;
     _angle = 0;
     return false;
   }
