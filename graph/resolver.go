@@ -14,4 +14,6 @@ type Resolver struct{
 	Db *sql.DB
 	Dice int
 	Card syncmap.Map // map[string]*model.Card
+	Chip syncmap.Map // map[string]*model.Card
+	Intuition bool
 }

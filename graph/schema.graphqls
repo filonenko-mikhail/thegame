@@ -15,12 +15,26 @@ type DiceMutations {
   set(val:Int!): Int! @goField(forceResolver: true)
 }
 
+type IntuitionQueries {
+  val: Boolean! @goField(forceResolver: true)
+}
+
+type IntuitionMutations {
+  set(val:Boolean!): Boolean! @goField(forceResolver: true)
+}
+
 type Card {
   id: ID!
   text: String!
   x: Float!
   y: Float!
-  color: Int
+  color: Int!
+  flipable: Boolean!
+  flip: Boolean!
+  fliptext: String!
+  prio: Int!
+  sizex: Float!
+  sizey: Float!
 }
 
 input CardAddPayload {
@@ -28,13 +42,28 @@ input CardAddPayload {
   text: String!
   x: Float!
   y: Float!
-  color: Int
+  color: Int!
+  flipable: Boolean!
+  flip: Boolean!
+  fliptext: String!
+  prio: Int!
+  sizex: Float!
+  sizey: Float!
 }
 
 input CardMovePayload {
   id: ID!
   x: Float!
   y: Float!
+}
+
+input CardFlipPayload {
+  id: ID!
+  flip: Boolean!
+}
+
+input CardRemovePayload {
+  id: ID!
 }
 
 type CardQueries {
@@ -44,15 +73,50 @@ type CardQueries {
 type CardMutations {
   add(payload: CardAddPayload!): Card! @goField(forceResolver: true)
   move(payload: CardMovePayload): Card! @goField(forceResolver: true)
-  delete(id: ID): Card! @goField(forceResolver: true)
+  remove(payload: CardRemovePayload): Card! @goField(forceResolver: true)
+  flip(payload: CardFlipPayload): Card! @goField(forceResolver: true)
+}
+
+type Chip {
+  id: ID!
+  color: Int!
+  x: Float!
+  y: Float!
+}
+
+input ChipAddPayload {
+  id: ID!
+  color: Int!
+  x: Float!
+  y: Float!
+}
+
+input ChipMovePayload {
+  id: ID!
+  x: Float!
+  y: Float!
+}
+
+type ChipQueries {
+  list: [Chip!]! @goField(forceResolver: true)
+}
+
+type ChipMutations {
+  add(payload: ChipAddPayload!): Chip! @goField(forceResolver: true)
+  move(payload: CardMovePayload): Chip! @goField(forceResolver: true)
+  remove(payload: CardRemovePayload): Chip! @goField(forceResolver: true)
 }
 
 type Query {
   dice: DiceQueries!
   card: CardQueries!
+  chip: ChipQueries!
+  intuition: IntuitionQueries!
 }
 
 type Mutation {
   dice: DiceMutations!
   card: CardMutations!
+  chip: ChipMutations!
+  intuition: IntuitionMutations!
 }

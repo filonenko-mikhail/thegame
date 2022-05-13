@@ -2,6 +2,10 @@ import 'dart:async';
 
 import 'package:logger/logger.dart';
 
+import 'package:flutter/material.dart';
+
+import 'package:flame/input.dart';
+
 var logger = Logger();
 
 Completer<bool> periodic(Duration interval, Function(int cycle) callback) {
@@ -23,4 +27,14 @@ Completer<bool> periodic(Duration interval, Function(int cycle) callback) {
   }();
 
   return done;
+}
+
+Size textSize(String text, double maxWidth) {
+    TextSpan span = TextSpan(text: text);
+    TextPainter textPainter = TextPainter(text: span,
+                                          textWidthBasis: TextWidthBasis.longestLine,
+                                          textDirection: TextDirection.ltr,
+                                          );
+    textPainter.layout(minWidth: 0, maxWidth: maxWidth);
+    return textPainter.size;
 }

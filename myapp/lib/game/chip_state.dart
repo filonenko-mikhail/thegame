@@ -9,56 +9,46 @@ import 'package:graphql/client.dart';
 import 'utils.dart';
 
 import 'package:json_annotation/json_annotation.dart' as js;
-part 'card_state.g.dart';
+
+part 'chip_state.g.dart';
 
 @js.JsonSerializable()
-class CardModel {
+class ChipModel {
   final String id;
-  final String text;
   final double x, y;
   final int color;
-  final bool flipable;
-  final bool flip;
-  final String fliptext;
-  final int prio;
-  final double sizex, sizey;
-
-  CardModel(this.id, this.text, this.x, this.y, this.color,
-    this.flipable,
-    this.flip,
-    this.fliptext,
-    this.prio,
-    this.sizex,
-    this.sizey);
   
-  factory CardModel.fromJson(Map<String, dynamic> json) => _$CardModelFromJson(json);
+  ChipModel(this.id,  this.x, this.y, this.color);
+  
+  factory ChipModel.fromJson(Map<String, dynamic> json) => _$ChipModelFromJson(json);
 
-  Map<String, dynamic> toJson() => _$CardModelToJson(this);
+  Map<String, dynamic> toJson() => _$ChipModelToJson(this);
 }
 
-class CardState {
-  Map<String, CardModel> clientCards = {};
+class ChipState {
+  Map<String, ChipModel> clientChips = {};
 
-  CardState(this.clientCards);
+  ChipState(this.clientChips);
 
-  CardState.clone(CardState other) {
-    clientCards.addAll(other.clientCards);
+  ChipState.clone(ChipState other) {
+    clientChips.addAll(other.clientChips);
   } 
 }
 
-abstract class CardEvent {}
-class CardList extends CardEvent {
-    Map<String, CardModel> card = {};
-    CardList(List<Object?> data) {
+
+abstract class ChipEvent {}
+class ChipList extends ChipEvent {
+    Map<String, ChipModel> chip = {};
+    ChipList(List<Object?> data) {
       data.forEach(addElement);
     }
     void addElement(element) {
-      CardModel item = CardModel.fromJson(element);
-      card[item.id] = item;
+      ChipModel item = ChipModel.fromJson(element);
+      chip[item.id] = item;
     }
 } 
 
-class CardBloc extends Bloc<CardEvent,CardState> {
+class ChipBloc extends Bloc<ChipEvent,ChipState> {
   final HttpLink link;
   final String clientId;
   final GraphQLClient client;
@@ -73,7 +63,7 @@ class CardBloc extends Bloc<CardEvent,CardState> {
     fetch: FetchPolicy.networkOnly,
   );
 
-  CardBloc(this.clientId, this.link, this.pollInterval, this.sendInterval)
+  ChipBloc(this.clientId, this.link, this.pollInterval, this.sendInterval)
     : client=GraphQLClient(cache: GraphQLCache(), 
                            link: link,
                            defaultPolicies: DefaultPolicies(
@@ -83,11 +73,11 @@ class CardBloc extends Bloc<CardEvent,CardState> {
                             ),),
       lastSend = DateTime.now().millisecondsSinceEpoch,
       toSendXY = {},
-      super(CardState({})) {
+      super(ChipState({})) {
 
 
-    on<CardList>((event, emit) {
-      CardState newstate = CardState(event.card);
+    on<ChipList>((event, emit) {
+      ChipState newstate = ChipState(event.chip);
       emit(newstate);
     });
 
@@ -97,11 +87,11 @@ class CardBloc extends Bloc<CardEvent,CardState> {
 
   // timer
   void poll(event) async {
-    const String cardQuery = r'''
-      { card { list { id text x y color flipable flip fliptext prio sizex sizey} } }
+    const String chipQuery = r'''
+      { chip { list { id x y color} } }
     ''';
     final QueryOptions options = QueryOptions(
-        document: gql(cardQuery)
+        document: gql(chipQuery)
     );
 
     final QueryResult result = await client.query(options);
@@ -111,7 +101,7 @@ class CardBloc extends Bloc<CardEvent,CardState> {
       return;
     }
 
-    add(CardList(result.data?['card']['list']));
+    add(ChipList(result.data?['chip']['list']));
   }
 
   // timer
@@ -119,7 +109,7 @@ class CardBloc extends Bloc<CardEvent,CardState> {
     const String mutation = r'''
         mutation ($id: ID! $x: Float! $y: Float!
         ){
-          card {
+          chip {
             move(payload:{id:$id x:$x y:$y}) {
               id
             }
@@ -147,11 +137,10 @@ class CardBloc extends Bloc<CardEvent,CardState> {
     toSendXY = {};
   }
 
-  void addCard(CardModel model) async {
-
+  void addChip(ChipModel model) async {
     const String mutation = r'''
-      mutation ($payload: CardAddPayload!){
-        card {
+      mutation ($payload: ChipAddPayload!){
+        chip {
           add(payload:$payload) {
             id
           }
@@ -180,49 +169,14 @@ class CardBloc extends Bloc<CardEvent,CardState> {
     }
   }
 
-  void moveCard(String id, double x, double y) async {
+  void moveChip(String id, double x, double y) async {
     toSendXY[id] = Vector2(x, y);
   }
 
-
-  void flipCard(String id, bool flip) async {
-
-    const String mutation = r'''
-      mutation ($id: ID! $flip: Boolean!){
-        card {
-          flip(payload: {id:$id flip:$flip}) {
-            id
-          }
-        }
-      }
-    ''';
-
-    int now = DateTime.now().millisecondsSinceEpoch;
-
-    if (now - lastSend > 200) {      
-      final MutationOptions options = MutationOptions(
-        document: gql(mutation),
-        variables: {
-          "id": id,
-          "flip": flip,
-        }
-      );
-
-      final QueryResult result = await client.mutate(options);
-
-      if (result.hasException) {
-        logger.i(result.exception.toString());
-        return;
-      }
-
-      lastSend = now;
-    }
-  }
-
-  void removeCard(String id) async {
+  void removeChip(String id) async {
     const String mutation = r'''
       mutation ($id: ID!){
-        card {
+        chip {
           remove(payload:{id:$id}) {
             id
           }

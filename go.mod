@@ -11,7 +11,6 @@ require (
 	github.com/spf13/cobra v1.4.0
 	github.com/vektah/gqlparser/v2 v2.4.2
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	nhooyr.io/websocket v1.8.7
 )
 
 require (
@@ -23,7 +22,6 @@ require (
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
-	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/matryer/moq v0.2.7 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mitchellh/mapstructure v1.3.1 // indirect

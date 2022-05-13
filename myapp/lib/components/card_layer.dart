@@ -2,7 +2,6 @@
 import 'package:logger/logger.dart';
 
 import 'package:flame/components.dart';
-import 'package:flame/effects.dart';
 import 'package:flame_bloc/flame_bloc.dart';
 
 import '../game/game.dart';
@@ -25,18 +24,13 @@ class CardLayer extends PositionComponent
 
   void handleCardState(String k, CardModel v) {
     Card card;
-    if (!cards.containsKey(k)) {
-      card = Card(k, v.color, text: v.text);
+    if (cards.containsKey(k)) {
+      card = cards[k]!;
+      card.setModel(v);
+    } else {
+      card = Card(v);
       cards[k] = card;
       add(card);
-    } else {
-      card = cards[k]!;
-    }
-
-    Vector2 pos = Vector2(v.x, v.y);
-    if (card.position != pos && !card.isDragged) {
-      final effect = MoveEffect.to(pos, EffectController(duration: 0.1));  
-      card.add(effect);
     }
   }
   

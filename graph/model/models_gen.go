@@ -3,19 +3,36 @@
 package model
 
 type Card struct {
-	ID    string  `json:"id"`
-	Text  string  `json:"text"`
-	X     float64 `json:"x"`
-	Y     float64 `json:"y"`
-	Color *int    `json:"color"`
+	ID       string  `json:"id"`
+	Text     string  `json:"text"`
+	X        float64 `json:"x"`
+	Y        float64 `json:"y"`
+	Color    int     `json:"color"`
+	Flipable bool    `json:"flipable"`
+	Flip     bool    `json:"flip"`
+	Fliptext string  `json:"fliptext"`
+	Prio     int     `json:"prio"`
+	Sizex    float64 `json:"sizex"`
+	Sizey    float64 `json:"sizey"`
 }
 
 type CardAddPayload struct {
-	ID    string  `json:"id"`
-	Text  string  `json:"text"`
-	X     float64 `json:"x"`
-	Y     float64 `json:"y"`
-	Color *int    `json:"color"`
+	ID       string  `json:"id"`
+	Text     string  `json:"text"`
+	X        float64 `json:"x"`
+	Y        float64 `json:"y"`
+	Color    int     `json:"color"`
+	Flipable bool    `json:"flipable"`
+	Flip     bool    `json:"flip"`
+	Fliptext string  `json:"fliptext"`
+	Prio     int     `json:"prio"`
+	Sizex    float64 `json:"sizex"`
+	Sizey    float64 `json:"sizey"`
+}
+
+type CardFlipPayload struct {
+	ID   string `json:"id"`
+	Flip bool   `json:"flip"`
 }
 
 type CardMovePayload struct {
@@ -27,11 +44,46 @@ type CardMovePayload struct {
 type CardMutations struct {
 	Add    *Card `json:"add"`
 	Move   *Card `json:"move"`
-	Delete *Card `json:"delete"`
+	Remove *Card `json:"remove"`
+	Flip   *Card `json:"flip"`
 }
 
 type CardQueries struct {
 	List []*Card `json:"list"`
+}
+
+type CardRemovePayload struct {
+	ID string `json:"id"`
+}
+
+type Chip struct {
+	ID    string  `json:"id"`
+	Color int     `json:"color"`
+	X     float64 `json:"x"`
+	Y     float64 `json:"y"`
+}
+
+type ChipAddPayload struct {
+	ID    string  `json:"id"`
+	Color int     `json:"color"`
+	X     float64 `json:"x"`
+	Y     float64 `json:"y"`
+}
+
+type ChipMovePayload struct {
+	ID string  `json:"id"`
+	X  float64 `json:"x"`
+	Y  float64 `json:"y"`
+}
+
+type ChipMutations struct {
+	Add    *Chip `json:"add"`
+	Move   *Chip `json:"move"`
+	Remove *Chip `json:"remove"`
+}
+
+type ChipQueries struct {
+	List []*Chip `json:"list"`
 }
 
 type DiceMutations struct {
@@ -40,4 +92,12 @@ type DiceMutations struct {
 
 type DiceQueries struct {
 	Val int `json:"val"`
+}
+
+type IntuitionMutations struct {
+	Set bool `json:"set"`
+}
+
+type IntuitionQueries struct {
+	Val bool `json:"val"`
 }

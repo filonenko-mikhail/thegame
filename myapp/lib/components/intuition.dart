@@ -8,13 +8,13 @@ import 'package:flame/components.dart';
 import 'package:flame/input.dart';
 import 'package:flame_bloc/flame_bloc.dart';
 
-import '../game/dice_state.dart';
+import '../game/intuition_state.dart';
 
 var logger = Logger();
 
-class Dice extends HudMarginComponent<FlameBlocGame> 
+class Intuition extends HudMarginComponent<FlameBlocGame> 
   with Tappable, Hoverable,
-       BlocComponent<DiceBloc, DiceState>
+       BlocComponent<IntuitionBloc, IntuitionState>
   {
 
   static final Paint circlePaint = Paint()
@@ -22,31 +22,16 @@ class Dice extends HudMarginComponent<FlameBlocGame>
     ..style=PaintingStyle.stroke
     ..strokeWidth=3;
 
-  static final Paint buttonPaint = Paint()
-    ..color=Colors.black26
-    ..style=PaintingStyle.fill;
-
-  static final Paint hoverButtonPaint = Paint()
-    ..color=Colors.black87
-    ..style=PaintingStyle.fill;
-
   static final TextPaint textPaint = TextPaint(
     style: const TextStyle(
-      color: Colors.black87,
+      color: Colors.green,
       fontWeight: FontWeight.bold,
     ),
   );
   static final TextPaint redTextPaint = TextPaint(
     style: const TextStyle(
-      color: Colors.amberAccent,
+      color: Colors.red,
       fontWeight: FontWeight.bold,
-    ),
-  );
-  static final TextPaint hoverTextPaint = TextPaint(
-    style: const TextStyle(
-      color: Colors.black87,
-      fontWeight: FontWeight.bold,
-      decoration: TextDecoration.underline,
     ),
   );
 
@@ -56,7 +41,7 @@ class Dice extends HudMarginComponent<FlameBlocGame>
   bool inProcess = false;
   double buttonAngle = 2*pi;
 
-  Dice({
+  Intuition({
     EdgeInsets? margin,
     Vector2? size,
   }):super(margin:margin, size:size);
@@ -64,42 +49,20 @@ class Dice extends HudMarginComponent<FlameBlocGame>
   @override
   void render(Canvas canvas) {
     super.render(canvas);
-
-    // center button paint
-    double radius = min(size.x/2, size.y/2) - 3;
-    if (!isHovered || tapdown) {
-      canvas.drawCircle((size/2).toOffset(), radius/2, buttonPaint);
-    } else {
-      canvas.drawCircle((size/2).toOffset(), radius/2, hoverButtonPaint);
-    }
     
     // outter paints
+    double radius = min(size.x/2, size.y/2) - 3;
     if (buttonAngle < 2*pi) {
       canvas.drawArc(Rect.fromCircle(center: (size/2).toOffset(), radius: radius),0, buttonAngle, true, circlePaint);
     } else {
       canvas.drawCircle((size/2).toOffset(), radius, circlePaint);
     }
 
-    canvas.save();
-    canvas.translate(size.x/2, size.y/2);
-    TextPaint painter = textPaint;
-    for (var i=0; i<6; ++i){
-      canvas.save();
-      canvas.rotate(i*(2*pi/6));
-      canvas.translate(0, -radius);
-      if (state?.val == i + 1) {
-        painter = redTextPaint;
-      } else {
-        if (isHovered) {
-          painter = hoverTextPaint;
-        } else {
-          painter = textPaint;
-        }
-      }
-      painter.render(canvas, (i+1).toString(), Vector2(0,0));
-      canvas.restore();
+    if (state!.val) {
+      textPaint.render(canvas, "Молния", size/2, anchor: Anchor.center);
+    } else {
+      redTextPaint.render(canvas, "Слезинка", size/2, anchor: Anchor.center);
     }
-    canvas.restore();
   }
 
   @override
@@ -140,7 +103,7 @@ class Dice extends HudMarginComponent<FlameBlocGame>
       val = nextRandom(1, 7);
     }
 
-    gameRef.read<DiceBloc>().sendDiceVal(val);
+    gameRef.read<IntuitionBloc>().sendIntuitionVal(val%2 == 0);
 
     return false;
   }
@@ -158,13 +121,14 @@ class Dice extends HudMarginComponent<FlameBlocGame>
   }
 
   @override
-  void onNewState(DiceState state) {
+  void onNewState(IntuitionState state) {
     super.onNewState(state);
 
     // Move back after click
     if (inProcess) {
       inProcess = false;
     }
-    
   }
+
+  
 }
