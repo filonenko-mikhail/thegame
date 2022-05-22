@@ -368,10 +368,10 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   late GameWidget gameWidget;
 
   _MyStatefulWidgetState() {
-    gameWidget = GameWidget<FlameBlocGame>(
+    gameWidget = GameWidget<MyGame>(
       game: MyGame(),
       overlayBuilderMap: {
-        requestIdentifier: (BuildContext ctx, FlameBlocGame game) {
+        requestIdentifier: (BuildContext ctx, MyGame game) {
           return 
             Container(
               constraints: BoxConstraints.loose(Size(game.size.x, 500)),
@@ -417,7 +417,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
               ]
             ));
       },
-      chipIdentifier: (BuildContext ctx, FlameBlocGame game) {
+      chipIdentifier: (BuildContext ctx, MyGame game) {
           return 
             Container(
               constraints: BoxConstraints.loose(Size(game.size.x, 500)),
@@ -467,13 +467,13 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   }
 
   // Request Card
-  void onOk(FlameBlocGame game) {
+  void onOk(MyGame game) {
     Size size = textSize(textController.text, 200);
 
     CardModel model = CardModel(const Uuid().v4(), 
       textController.text, 
-      game.size.x/2, game.size.y/2, //position
-      newColor.value, false, false, "", 0, 
+      game.cameraPosition.x/2, game.cameraPosition.y/2,
+      newColor.value, false, false, "", 10, 
       max(size.width, 100), max(size.height, 200));
 
     game.read<CardBloc>().addCard(model);
@@ -485,9 +485,9 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   }
 
   // Chip card
-  void onChipOk(FlameBlocGame game) {
+  void onChipOk(MyGame game) {
     ChipModel model = ChipModel(const Uuid().v4(), 
-      game.size.x/2, game.size.y/2, //position
+      game.cameraPosition.x/2, game.cameraPosition.y/2,
       newChipColor.value);
 
     game.read<ChipBloc>().addChip(model);

@@ -52,6 +52,7 @@ class ChipBloc extends Bloc<ChipEvent,ChipState> {
   final String clientId;
   final GraphQLClient client;
   int lastSend;
+  int lastPoll;
   final Duration pollInterval;
   final Duration sendInterval;
   late final Completer<bool> task;
@@ -72,6 +73,7 @@ class ChipBloc extends Bloc<ChipEvent,ChipState> {
                               mutate: policies,
                             ),),
       lastSend = DateTime.now().millisecondsSinceEpoch,
+      lastPoll = DateTime.now().millisecondsSinceEpoch,
       toSendXY = {},
       super(ChipState({})) {
 
@@ -107,6 +109,11 @@ class ChipBloc extends Bloc<ChipEvent,ChipState> {
 
   // timer
   void poll(event) async {
+    int now = DateTime.now().millisecondsSinceEpoch;
+    if (now - lastPoll < 200) {
+      return ;
+    }
+
     final chipQuery = gql(r'''
       { chip { list { id x y color} } }
     ''');
@@ -122,6 +129,7 @@ class ChipBloc extends Bloc<ChipEvent,ChipState> {
     }
 
     add(ChipList(result.data?['chip']['list']));
+    lastPoll = DateTime.now().millisecondsSinceEpoch;
   }
 
   // timer
@@ -169,24 +177,25 @@ class ChipBloc extends Bloc<ChipEvent,ChipState> {
 
     int now = DateTime.now().millisecondsSinceEpoch;
 
-    if (now - lastSend > 200) {      
-      final MutationOptions options = MutationOptions(
-        document: mutation,
-        variables: {
-          "payload": model.toJson(),
-          "client": clientId,
-        }
-      );
-
-      final QueryResult result = await client.mutate(options);
-
-      if (result.hasException) {
-        logger.i(result.exception.toString());
-        return;
-      }
-
-      lastSend = now;
+    if (now - lastSend < 200) {
+      return;
     }
+    final MutationOptions options = MutationOptions(
+      document: mutation,
+      variables: {
+        "payload": model.toJson(),
+        "client": clientId,
+      }
+    );
+
+    final QueryResult result = await client.mutate(options);
+
+    if (result.hasException) {
+      logger.i(result.exception.toString());
+      return;
+    }
+
+    lastSend = now;
   }
 
   void moveChip(String id, double x, double y) async {
@@ -205,23 +214,24 @@ class ChipBloc extends Bloc<ChipEvent,ChipState> {
     ''');
 
     int now = DateTime.now().millisecondsSinceEpoch;
-    if (now - lastSend > 20) {      
-      final MutationOptions options = MutationOptions(
-        document: mutation,
-        variables: <String, dynamic>{
-          'id': id,
-        },
-      );
+    if (now - lastSend < 200) {
+      return;
+    }      
+    final MutationOptions options = MutationOptions(
+      document: mutation,
+      variables: <String, dynamic>{
+        'id': id,
+      },
+    );
 
-      final QueryResult result = await client.mutate(options);
+    final QueryResult result = await client.mutate(options);
 
-      if (result.hasException) {
-        logger.i(result.exception.toString());
-        return;
-      }
-
-      lastSend = now;
+    if (result.hasException) {
+      logger.i(result.exception.toString());
+      return;
     }
+
+    lastSend = now;
   }
 
   @override

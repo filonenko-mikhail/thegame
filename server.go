@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
-	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
@@ -94,14 +93,11 @@ func serve(cmd *cobra.Command, args []string) error {
 		},
 		KeepAlivePingInterval: 15 * time.Second,
 	})
-	srv.Use(extension.Introspection{})
 	srv.AddTransport(transport.Options{})
 	srv.AddTransport(transport.GET{})
 	srv.AddTransport(transport.POST{})
 	srv.AddTransport(transport.MultipartForm{})
 
-	srv.Use(extension.Introspection{})
-	
 	rows, err := db.QueryContext(context.Background(), 
 	`SELECT card_id, body, x, y, color, flipable, flip, fliptext, prio,
 		sizex, sizey

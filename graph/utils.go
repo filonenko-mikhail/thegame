@@ -12,7 +12,7 @@ func Update(chatMessages []*model.Update,
 	
 	// Construct the newly sent message and append it to the existing messages
 	msg := model.Update{
-		ID: id,
+		ID: "a",
 	}
 	chatMessages = append(chatMessages, &msg)
 	mu.Lock()
@@ -22,5 +22,4 @@ func Update(chatMessages []*model.Update,
 		observer <- chatMessages
 	}
 	mu.Unlock()
-
 }

@@ -1,6 +1,7 @@
 
 import 'dart:async';
 
+
 import 'package:flame/input.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:graphql/client.dart';
@@ -8,7 +9,9 @@ import 'package:graphql/client.dart';
 import 'utils.dart';
 
 import 'package:json_annotation/json_annotation.dart' as js;
+
 part 'card_state.g.dart';
+
 
 @js.JsonSerializable()
 class CardModel {
@@ -62,6 +65,7 @@ class CardBloc extends Bloc<CardEvent,CardState> {
   final String clientId;
   final GraphQLClient client;
   int lastSend;
+  int lastPoll;
   final Duration pollInterval;
   final Duration sendInterval;
   late final Completer<bool> task;
@@ -82,6 +86,7 @@ class CardBloc extends Bloc<CardEvent,CardState> {
                               mutate: policies,
                             ),),
       lastSend = DateTime.now().millisecondsSinceEpoch,
+      lastPoll = DateTime.now().millisecondsSinceEpoch,
       toSendXY = {},
       super(CardState({})) {
 
@@ -117,6 +122,10 @@ class CardBloc extends Bloc<CardEvent,CardState> {
 
   // timer
   void poll(event) async {
+    int now = DateTime.now().millisecondsSinceEpoch;
+    if (now - lastPoll < 200) {
+      return ;
+    }
     final cardQuery = gql(r'''
       { card { list { id text x y color flipable flip fliptext prio sizex sizey} } }
     ''');
@@ -132,6 +141,7 @@ class CardBloc extends Bloc<CardEvent,CardState> {
     }
 
     add(CardList(result.data?['card']['list']));
+    lastPoll = DateTime.now().millisecondsSinceEpoch;
   }
 
   // timer
@@ -167,7 +177,6 @@ class CardBloc extends Bloc<CardEvent,CardState> {
   }
 
   void addCard(CardModel model) async {
-
     final mutation = gql(r'''
       mutation ($payload: CardAddPayload!){
         card {
@@ -180,30 +189,30 @@ class CardBloc extends Bloc<CardEvent,CardState> {
 
     int now = DateTime.now().millisecondsSinceEpoch;
 
-    if (now - lastSend > 200) {      
-      final MutationOptions options = MutationOptions(
-        document: mutation,
-        variables: {
-          "payload": model.toJson(),
-          "client": clientId,
-        }
-      );
-
-      final QueryResult result = await client.mutate(options);
-
-      if (result.hasException) {
-        logger.i(result.exception.toString());
-        return;
-      }
-
-      lastSend = now;
+    if (now - lastSend < 200) {
+      return;
     }
+    final MutationOptions options = MutationOptions(
+      document: mutation,
+      variables: {
+        "payload": model.toJson(),
+        "client": clientId,
+      }
+    );
+
+    final QueryResult result = await client.mutate(options);
+
+    if (result.hasException) {
+      logger.i(result.exception.toString());
+      return;
+    }
+
+    lastSend = now;
   }
 
   void moveCard(String id, double x, double y) async {
     toSendXY[id] = Vector2(x, y);
   }
-
 
   void flipCard(String id, bool flip) async {
     final mutation = gql(r'''
