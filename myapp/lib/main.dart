@@ -6,6 +6,8 @@ import 'package:graphql/client.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
 
+//import 'package:universal_html/html.dart';
+
 import 'game/dice_state.dart';
 import 'game/intuition_state.dart';
 import 'game/game.dart';
@@ -15,9 +17,16 @@ import 'game/chip_state.dart';
 var logger = Logger();
 
 void main() {
+  final Uri myurl = Uri.base;
+  //final String origin = myurl.origin;
+  final String host = myurl.host;
+  int port = 80;
+  if (myurl.hasPort) {
+    port = myurl.port;
+  }
 
-  const endpoint = 'http://127.0.0.1:8080/query';
-  const wsendpoint = 'ws://127.0.0.1:8080/query';
+  String endpoint = 'http://${host}:${port}/query';
+  String wsendpoint = 'ws://${host}:${port}/query';
 
   final httpLink = HttpLink(endpoint);
   final wslink = WebSocketLink(wsendpoint);
