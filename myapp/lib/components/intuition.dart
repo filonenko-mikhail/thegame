@@ -38,8 +38,8 @@ class Intuition extends HudMarginComponent<FlameBlocGame>
   static final random = Random.secure();
 
   bool tapdown = false;
-  bool inProcess = false;
   double buttonAngle = 2*pi;
+  bool localValue = true;
 
   Intuition({
     EdgeInsets? margin,
@@ -58,11 +58,15 @@ class Intuition extends HudMarginComponent<FlameBlocGame>
       canvas.drawCircle((size/2).toOffset(), radius, circlePaint);
     }
 
-    if (state!.val) {
+    if (localValue) {
       textPaint.render(canvas, "Молния", size/2, anchor: Anchor.center);
     } else {
       redTextPaint.render(canvas, "Слезинка", size/2, anchor: Anchor.center);
     }
+  }
+
+  int nextRandom(int min, int max) {
+    return min + random.nextInt(max - min);
   }
 
   @override
@@ -71,15 +75,13 @@ class Intuition extends HudMarginComponent<FlameBlocGame>
 
     if (buttonAngle < 2*pi) {
       buttonAngle += (2*pi)/180;
-    }
-  }
+      localValue = nextRandom(1, 7) % 2 == 0;
 
-  /**
-   * Generates a positive random integer uniformly distributed on the range
-   * from [min], inclusive, to [max], exclusive.
-   */
-  int nextRandom(int min, int max) {
-    return min + random.nextInt(max - min);
+      if (buttonAngle >= 2*pi) {
+        
+        gameRef.read<IntuitionBloc>().sendIntuitionVal(localValue);
+      }
+    }
   }
 
   @override
@@ -92,18 +94,7 @@ class Intuition extends HudMarginComponent<FlameBlocGame>
   bool onTapUp(TapUpInfo event) {
     tapdown = false;
 
-    // move back on state change
-    inProcess = true;
-
     buttonAngle = 0;
-
-    var limit = nextRandom(5, 30);
-    var val = nextRandom(1, 7);
-    for (var i = 1; i < limit; i++) {
-      val = nextRandom(1, 7);
-    }
-
-    gameRef.read<IntuitionBloc>().sendIntuitionVal(val%2 == 0);
 
     return false;
   }
@@ -115,19 +106,9 @@ class Intuition extends HudMarginComponent<FlameBlocGame>
   }
 
   @override
-  void onGameResize(Vector2 gameSize) {
-    
-    super.onGameResize(gameSize);
-  }
-
-  @override
   void onNewState(IntuitionState state) {
+    localValue = state.val;
     super.onNewState(state);
-
-    // Move back after click
-    if (inProcess) {
-      inProcess = false;
-    }
   }
 
   

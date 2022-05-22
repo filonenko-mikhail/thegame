@@ -22,4 +22,4 @@ CREATE TABLE chips(
     y DOUBLE NOT NULL,
     color BIGINT NOT NULL,
     PRIMARY KEY(chip_id)
-)
+);

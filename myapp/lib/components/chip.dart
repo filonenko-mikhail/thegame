@@ -22,6 +22,8 @@ class Chip extends PositionComponent
   
   ChipModel model;
 
+  Paint paint = Paint();
+
   Chip(this.model,
   {
     Vector2? position,
@@ -32,12 +34,14 @@ class Chip extends PositionComponent
   }):
   super(
     position: position,
-    size: Vector2(20, 20),
+    size: Vector2(40, 40),
     scale: scale,
     angle: angle,
     anchor: anchor,
     priority: priority
-  );
+  ) {
+    paint..color = Color(model.color);
+  }
 
   void setModel(ChipModel newModel) {
     Vector2 pos = Vector2(newModel.x, newModel.y);
@@ -60,13 +64,10 @@ class Chip extends PositionComponent
     add(moveEffect);
   }
 
-  bool logged = false;
   @override
   void render(Canvas canvas) {
-    Color backgroundColor = Color(model.color);
-    canvas.drawCircle( (size/2).toOffset(), 10, Paint()..color = backgroundColor);
-    
-    //super.render(canvas);
+    canvas.drawCircle((size/2).toOffset(), 20, paint);
+    super.render(canvas);
   }
 
   // Dragging
@@ -83,13 +84,13 @@ class Chip extends PositionComponent
   @override
   bool onDragUpdate(int pointerId, DragUpdateInfo info) {
     position = info.eventPosition.game - _draganchor;
-    gameRef.read<ChipBloc>().moveChip(model.id, position.x, position.y);
     return false;
   }
 
   @override
   bool onDragEnd(int pointerId, DragEndInfo info) {
     _draganchor = Vector2.zero();
+    gameRef.read<ChipBloc>().moveChip(model.id, position.x, position.y);
     return false;
   }
 

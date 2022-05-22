@@ -8,13 +8,16 @@ import (
 	"thegame/graph"
 	"thegame/graph/generated"
 	"thegame/graph/model"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
-	"github.com/sirupsen/logrus"
-
+	"github.com/gorilla/websocket"
 	"github.com/rs/cors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
 
@@ -56,8 +59,15 @@ func serve(cmd *cobra.Command, args []string) error {
 
 	router := chi.NewRouter()
 	router.Use(cors.New(cors.Options{
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   []string{"*", "http://localhost"},
 		AllowCredentials: true,
+		AllowedMethods: []string{"GET", "PATCH",
+			"POST", 
+			"CONNECT",
+			"DELETE",
+			"UPDATE",
+			"PUT",
+			"OPTIONS"},
 		Debug:            false,
 	}).Handler)
 
@@ -65,9 +75,33 @@ func serve(cmd *cobra.Command, args []string) error {
 		Db: db,
 		Dice: 1,
 		Card: sync.Map{},
-		Intuition: true,}
-	srv := handler.NewDefaultServer(generated.NewExecutableSchema(generated.Config{Resolvers: &resolver}))
-			
+		Intuition: true,
+
+		ChatMessages: []*model.Update{},
+    	ChatObservers: map[string]chan []*model.Update{},
+	}
+	srv := handler.New(
+		generated.NewExecutableSchema(generated.
+			Config{Resolvers: &resolver}))
+
+	srv.AddTransport(&transport.Websocket{
+		Upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+		},
+		KeepAlivePingInterval: 15 * time.Second,
+	})
+	srv.Use(extension.Introspection{})
+	srv.AddTransport(transport.Options{})
+	srv.AddTransport(transport.GET{})
+	srv.AddTransport(transport.POST{})
+	srv.AddTransport(transport.MultipartForm{})
+
+	srv.Use(extension.Introspection{})
+	
 	rows, err := db.QueryContext(context.Background(), 
 	`SELECT card_id, body, x, y, color, flipable, flip, fliptext, prio,
 		sizex, sizey
@@ -91,12 +125,11 @@ func serve(cmd *cobra.Command, args []string) error {
 		resolver.Card.Store(item.ID, &item)
 	}
 
-
 	router.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", srv)
 
-	fs := http.FileServer(http.Dir("myapp/build/web/"))
-	router.Handle("/*", fs);
+	//fs := http.FileServer(http.Dir("myapp/build/web/"))
+	//router.Handle("/*", fs);
 
 	httpAddr, err := cmd.Flags().GetString("http-addr")
 	if err != nil {

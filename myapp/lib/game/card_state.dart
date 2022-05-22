@@ -1,7 +1,6 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:flame/input.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:graphql/client.dart';
@@ -59,7 +58,7 @@ class CardList extends CardEvent {
 } 
 
 class CardBloc extends Bloc<CardEvent,CardState> {
-  final HttpLink link;
+  final Link link;
   final String clientId;
   final GraphQLClient client;
   int lastSend;
@@ -67,6 +66,7 @@ class CardBloc extends Bloc<CardEvent,CardState> {
   final Duration sendInterval;
   late final Completer<bool> task;
   late final Completer<bool> task2;
+  late final Stream subscription;
   Map<String, Vector2> toSendXY;
 
   static final policies = Policies(
@@ -91,17 +91,37 @@ class CardBloc extends Bloc<CardEvent,CardState> {
       emit(newstate);
     });
 
+    final subscriptionRequest = gql(
+      r'''
+        subscription {
+          updates {
+            id
+          }
+        }
+      ''',
+    );
+    subscription = client.subscribe(
+      SubscriptionOptions(
+        document: subscriptionRequest
+      ),
+    );
+    subscription.listen(onMessage);
+
     task = periodic(pollInterval, poll);
     task2 = periodic(sendInterval, send);
   }
 
+  void onMessage(event) {
+    poll(event);
+  }
+
   // timer
   void poll(event) async {
-    const String cardQuery = r'''
+    final cardQuery = gql(r'''
       { card { list { id text x y color flipable flip fliptext prio sizex sizey} } }
-    ''';
+    ''');
     final QueryOptions options = QueryOptions(
-        document: gql(cardQuery)
+        document: cardQuery
     );
 
     final QueryResult result = await client.query(options);
@@ -116,20 +136,19 @@ class CardBloc extends Bloc<CardEvent,CardState> {
 
   // timer
   void send(event) async {
-    const String mutation = r'''
-        mutation ($id: ID! $x: Float! $y: Float!
-        ){
+    final mutation = gql(r'''
+        mutation ($id: ID! $x: Float! $y: Float!){
           card {
             move(payload:{id:$id x:$x y:$y}) {
               id
             }
           }
         }
-      ''';
+      ''');
 
     toSendXY.forEach((key, value) async {
       final MutationOptions options = MutationOptions(
-        document: gql(mutation),
+        document: mutation,
         variables: <String, dynamic>{
           'id': key,
           'x':  value.x,
@@ -149,7 +168,7 @@ class CardBloc extends Bloc<CardEvent,CardState> {
 
   void addCard(CardModel model) async {
 
-    const String mutation = r'''
+    final mutation = gql(r'''
       mutation ($payload: CardAddPayload!){
         card {
           add(payload:$payload) {
@@ -157,15 +176,16 @@ class CardBloc extends Bloc<CardEvent,CardState> {
           }
         }
       }
-    ''';
+    ''');
 
     int now = DateTime.now().millisecondsSinceEpoch;
 
     if (now - lastSend > 200) {      
       final MutationOptions options = MutationOptions(
-        document: gql(mutation),
+        document: mutation,
         variables: {
-          "payload": model.toJson()
+          "payload": model.toJson(),
+          "client": clientId,
         }
       );
 
@@ -186,8 +206,7 @@ class CardBloc extends Bloc<CardEvent,CardState> {
 
 
   void flipCard(String id, bool flip) async {
-
-    const String mutation = r'''
+    final mutation = gql(r'''
       mutation ($id: ID! $flip: Boolean!){
         card {
           flip(payload: {id:$id flip:$flip}) {
@@ -195,16 +214,53 @@ class CardBloc extends Bloc<CardEvent,CardState> {
           }
         }
       }
-    ''';
+    ''');
 
     int now = DateTime.now().millisecondsSinceEpoch;
 
     if (now - lastSend > 200) {      
       final MutationOptions options = MutationOptions(
-        document: gql(mutation),
+        document: mutation,
         variables: {
           "id": id,
           "flip": flip,
+          "client": clientId,
+        }
+      );
+
+      final QueryResult result = await client.mutate(options);
+
+      if (result.hasException) {
+        logger.i(result.exception.toString());
+        return;
+      }
+
+      lastSend = now;
+    }
+  }
+
+  void changePrio(String id, int prio) async {
+
+    final mutation = gql(r'''
+      mutation ($id: ID! $prio: Int!){
+        card {
+          prio(payload: {id:$id prio:$prio}) {
+            id
+            prio
+          }
+        }
+      }
+    ''');
+
+    int now = DateTime.now().millisecondsSinceEpoch;
+
+    if (now - lastSend > 200) {      
+      final MutationOptions options = MutationOptions(
+        document: mutation,
+        variables: {
+          "id": id,
+          "prio": prio,
+          "client": clientId,
         }
       );
 
@@ -220,7 +276,7 @@ class CardBloc extends Bloc<CardEvent,CardState> {
   }
 
   void removeCard(String id) async {
-    const String mutation = r'''
+    final mutation = gql(r'''
       mutation ($id: ID!){
         card {
           remove(payload:{id:$id}) {
@@ -228,12 +284,12 @@ class CardBloc extends Bloc<CardEvent,CardState> {
           }
         }
       }
-    ''';
+    ''');
 
     int now = DateTime.now().millisecondsSinceEpoch;
     if (now - lastSend > 20) {      
       final MutationOptions options = MutationOptions(
-        document: gql(mutation),
+        document: mutation,
         variables: <String, dynamic>{
           'id': id,
         },

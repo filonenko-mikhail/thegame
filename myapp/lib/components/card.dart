@@ -2,22 +2,36 @@ import 'dart:math';
 
 import 'package:logger/logger.dart';
 
-import 'package:flutter/material.dart';
+import 'package:flutter/material.dart' show
+  Color,
+  Colors,
+  TextStyle,
+  TextDecoration,
+  Paint,
+  PaintingStyle,
+  TextPainter,
+  TextSpan,
+  TextWidthBasis,
+  TextDirection,
+  Canvas,
+  Offset,
+  Rect;
 
 import 'package:flame/components.dart';
 import 'package:flame/input.dart';
 import 'package:flame/effects.dart';
-import 'package:flame/components.dart' as components;
+//import 'package:flame/components.dart' as components;
 import 'close_button.dart' as close_button;
 
 import 'package:flame_bloc/flame_bloc.dart';
 
 import '../game/card_state.dart';
+import 'updown_button.dart';
 
 var logger = Logger();
 
 class Card extends PositionComponent
-  with components.Draggable, Tappable, Hoverable,
+  with Draggable, Tappable, Hoverable,
   HasGameRef<FlameBlocGame> {
   
   static final TextPaint regularTextPaint = TextPaint(
@@ -32,6 +46,10 @@ class Card extends PositionComponent
 
   String text;
   CardModel model;
+  close_button.CloseButton closeButton;
+  final flipPaint = Paint()
+    ..color = Colors.black45
+    ..style = PaintingStyle.fill;
 
   Card(this.model,
   {
@@ -41,14 +59,16 @@ class Card extends PositionComponent
     Anchor? anchor,
     int? priority,
   }):text = "",
-  super(
-    position: position,
-    size: Vector2(model.sizex, model.sizey),
-    scale: scale,
-    angle: angle,
-    anchor: anchor,
-    priority: priority
-  ) {
+    closeButton = close_button.CloseButton()
+      ..size=Vector2(20, 20),
+    super(
+      position: position,
+      size: Vector2(model.sizex, model.sizey),
+      scale: scale,
+      angle: angle,
+      anchor: anchor,
+      priority: priority
+    ) {
     text = model.text;
     if (model.flipable) {
       if (model.flip) {
@@ -60,13 +80,13 @@ class Card extends PositionComponent
   void setModel(CardModel newModel) {
     Vector2 pos = Vector2(newModel.x, newModel.y);
     if (position != pos && !isDragged) {
-      var moveEffect = MoveEffect.to(pos, EffectController(duration: 0.1));
+      var moveEffect = MoveEffect.to(pos, EffectController(duration: 0.3));
       add(moveEffect);
     }
 
     Vector2 size = Vector2(newModel.sizex, newModel.sizey);
     if (size != size) {
-      var sizeEffect = SizeEffect.to(size, EffectController(duration: 0.1));
+      var sizeEffect = SizeEffect.to(size, EffectController(duration: 0.2));
       add(sizeEffect);
     }
 
@@ -77,8 +97,9 @@ class Card extends PositionComponent
         text = newModel.text;
       }
     }
+    
     if (newModel.prio != model.prio) {
-      changePriorityWithoutResorting(priority);
+      changePriorityWithoutResorting(newModel.prio);
       parent?.reorderChildren();
     }
     model = newModel;
@@ -95,55 +116,53 @@ class Card extends PositionComponent
     var moveEffect = MoveEffect.to(pos, EffectController(duration: 0.1));
     add(moveEffect);
     
-
-    close_button.CloseButton closeButton = close_button.CloseButton()
-      ..size=Vector2(20, 20)
-      ..position;
+    changePriorityWithoutResorting(model.prio);
+    parent?.reorderChildren();
     
     add(closeButton);
+
+    UpButton upButton = UpButton()..size=Vector2(20, 10);
+    add(upButton);
+    DownButton downButton = DownButton()..size=Vector2(20, 10);
+    add(downButton);
   }
 
-  bool logged = false;
   @override
   void render(Canvas canvas) {
-    Color backgroundColor = Color(model.color);
-    canvas.drawRect(Rect.fromPoints(Offset.zero, size.toOffset()), Paint()..color = backgroundColor);
-    
     super.render(canvas);
+    
+    Color backgroundColor = Color(model.color);
+    canvas.drawRect(Rect.fromPoints(Offset.zero, size.toOffset()), 
+      Paint()..color = backgroundColor);
 
     TextSpan span = TextSpan(text: text);
     TextPainter textPainter = TextPainter(text: span,
                                           textWidthBasis: TextWidthBasis.longestLine,
                                           textDirection: TextDirection.ltr,
                                           );
-    textPainter.layout(minWidth: 0, maxWidth: size.x);
+    textPainter.layout(minWidth: 0, maxWidth: size.x - closeButton.size.x);
     textPainter.paint(canvas, Offset.zero);
 
-    if (_upsideAngle > 0) {
-      canvas.drawArc(
-          Rect.fromCircle(center: (size/2).toOffset(), radius: _upsideAngleRadius),
-          0,
-          _upsideAngle,
-          true,
-          Paint()..style = PaintingStyle.fill);
+    if (flipAngle > 0) {
+      double radius = min(size.x, size.y)/2 - 1;
+      canvas.drawArc(Rect.fromCircle(center: (size/2).toOffset(),
+             radius: radius),
+          0, flipAngle, true, flipPaint);
     }
   }
 
-
   // Flipable
-  double _upsideAngle = 0;
-  double _upsideAngleVelocity = 0;
-  double _upsideAngleRadius = 10;
+  double flipAngle = 0;
+  double flipAngleVelocity = 0;
   @override
   void update(double dt) {
-    _upsideAngle += _upsideAngleVelocity;
-    if (_upsideAngle > 2 * pi) {
+    flipAngle += flipAngleVelocity;
+    if (flipAngle > 2 * pi) {
       gameRef.read<CardBloc>().flipCard(model.id, !model.flip);
-      _upsideAngle = 0;
+      flipAngle = 0;
     }
     super.update(dt);
   }
-
 
   @override
   bool onTapDown(TapDownInfo info) {
@@ -154,7 +173,7 @@ class Card extends PositionComponent
       return false;
     }
     
-    _upsideAngleVelocity = pi / 90;
+    flipAngleVelocity = pi / 30;
     return false;
   }
 
@@ -163,8 +182,8 @@ class Card extends PositionComponent
     if (!model.flipable) {
       return false;
     }
-    _upsideAngleVelocity = 0;
-    _upsideAngle = 0;
+    flipAngleVelocity = 0;
+    flipAngle = 0;
     return false;
   }
 
@@ -173,12 +192,10 @@ class Card extends PositionComponent
     if (!model.flipable) {
       return false;
     }
-    _upsideAngleVelocity = 0;
-    _upsideAngle = 0;
+    flipAngleVelocity = 0;
+    flipAngle = 0;
     return false;
   }
-
-
 
   // Dragging
   Vector2 _draganchor = Vector2.zero();
@@ -194,13 +211,13 @@ class Card extends PositionComponent
   @override
   bool onDragUpdate(int pointerId, DragUpdateInfo info) {
     position = info.eventPosition.game - _draganchor;
-    gameRef.read<CardBloc>().moveCard(model.id, position.x, position.y);
     return false;
   }
 
   @override
   bool onDragEnd(int pointerId, DragEndInfo info) {
     _draganchor = Vector2.zero();
+    gameRef.read<CardBloc>().moveCard(model.id, position.x, position.y);
     return false;
   }
 
@@ -210,10 +227,17 @@ class Card extends PositionComponent
     return false;
   }
 
+  // Child control handlers
   @override
   void onRemove() {
     gameRef.read<CardBloc>().removeCard(model.id);
     super.onRemove();
+  }
+
+  void changePrio(int newprio) {
+    changePriorityWithoutResorting(newprio);
+    parent?.reorderChildren();
+    gameRef.read<CardBloc>().changePrio(model.id, newprio);
   }
 
 }

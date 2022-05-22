@@ -1,11 +1,11 @@
 import 'dart:math';
 
-import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:logger/logger.dart';
 
+import 'package:flame/game.dart';
 import 'package:flutter/services.dart';
 import 'package:flame/input.dart';
 import 'package:flame/components.dart';
@@ -20,17 +20,16 @@ import '../components/intuition.dart';
 import 'card_state.dart';
 import 'chip_state.dart';
 import 'utils.dart';
+import '../components/background_layer.dart';
+
 
 final logger = Logger();
 
 const requestIdentifier = 'RequestEdit';
 const chipIdentifier = 'ChipEdit';
 
-Vector2 cameraVelocity = Vector2.zero();
-
 class MyGame extends FlameBlocGame
-    with
-        KeyboardEvents,
+  with  KeyboardEvents,
         ScrollDetector,
         MouseMovementDetector,
         HasTappables,
@@ -40,31 +39,76 @@ class MyGame extends FlameBlocGame
   final PushButton newRequest = PushButton("Запрос", 
     margin: const EdgeInsets.only(top: 1, left: 1),
     size: Vector2(100, 40));
-
-  final PushButton zoomin = PushButton("Приблизить", 
-    margin: const EdgeInsets.only(top: 1, left: 100),
-    size: Vector2(100, 40)); 
-  final PushButton zoomout = PushButton("Отдалить", 
-    margin: const EdgeInsets.only(top: 1, left: 200),
-    size: Vector2(100, 40)); 
-
   final PushButton newChip = PushButton("Фишка", 
-    margin: const EdgeInsets.only(top: 1, left: 300),
+    margin: const EdgeInsets.only(top: 41, left: 1),
     size: Vector2(100, 40));
 
-  final PushButton physicalLevel = PushButton("Физический ур-нь", 
+  final PushButton physicalLevel = PushButton("Физический", 
+    margin: const EdgeInsets.only(top: 1, left: 100),
+    size: Vector2(100, 40));
+  final PushButton emotionalLevel = PushButton("Эмоциональ\nный", 
+    margin: const EdgeInsets.only(top: 1, left: 200),
+    size: Vector2(100, 40));
+  final PushButton mentalLevel = PushButton("Ментальный", 
+    margin: const EdgeInsets.only(top: 1, left: 300),
+    size: Vector2(100, 40));
+  final PushButton spiritLevel = PushButton("Духовный", 
     margin: const EdgeInsets.only(top: 1, left: 400),
     size: Vector2(100, 40));
 
+  final PushButton physicalKnowing = PushButton("Физическое\nОсознание", 
+    margin: const EdgeInsets.only(top: 41, left: 100),
+    size: Vector2(100, 40));
+  final PushButton emotionalKnowing = PushButton("Эмоциональ\nОсознание", 
+    margin: const EdgeInsets.only(top: 41, left: 200),
+    size: Vector2(100, 40));
+  final PushButton mentalKnowing = PushButton("Ментальное\nОсознание", 
+    margin: const EdgeInsets.only(top: 41, left: 300),
+    size: Vector2(100, 40));
+  final PushButton spiritKnowing = PushButton("Духовное\nОсознание", 
+    margin: const EdgeInsets.only(top: 41, left: 400),
+    size: Vector2(100, 40));
+
+  final PushButton serviceButton = PushButton("Служение", 
+    margin: const EdgeInsets.only(top: 1, left: 500),
+    size: Vector2(100, 40));
+
+  final PushButton angelButton = PushButton("Ангел", 
+    margin: const EdgeInsets.only(top: 1, left: 600),
+    size: Vector2(100, 40));
+  
+  final PushButton insightButton = PushButton("Прозрение", 
+    margin: const EdgeInsets.only(top: 1, left: 700),
+    size: Vector2(100, 40));
+  final PushButton setbackButton = PushButton("Препятствие", 
+    margin: const EdgeInsets.only(top: 41, left: 700),
+    size: Vector2(100, 40));
+  final PushButton feedbackButton = PushButton("Обратная\nсвязь", 
+    margin: const EdgeInsets.only(top: 1, left: 800),
+    size: Vector2(100, 40));
+
+  
+  final PushButton painButton = PushButton("Боль",
+    margin: const EdgeInsets.only(top: 1, left: 1000),
+    size: Vector2(100, 40));
+  
+  final PushButton zoomin = PushButton("Приблизить", 
+    margin: const EdgeInsets.only(top: 1, left: 1200),
+    size: Vector2(100, 40)); 
+  final PushButton zoomout = PushButton("Отдалить", 
+    margin: const EdgeInsets.only(top: 41, left: 1200),
+    size: Vector2(100, 40));
+
+  
   final Dice dice = Dice(margin: const EdgeInsets.only(bottom: 20, left: 20), size: Vector2(100, 100));
 
   final Intuition intuition = Intuition(margin: const EdgeInsets.only(bottom: 20, right: 20), size: Vector2(100, 100));
-          
-  static const int defaultFieldNums = 4;
-  Vector2 cameraPosition = Vector2.zero();
 
   final CardLayer cardLayer = CardLayer();
   final ChipLayer chipLayer = ChipLayer();
+  final BackgroundLayer backgroundLayer = BackgroundLayer(priority:-100);
+
+  Vector2 cameraPosition = Vector2.zero();
   
   @override
   Color backgroundColor() {
@@ -75,10 +119,14 @@ class MyGame extends FlameBlocGame
   Future<void> onLoad() async {
     await super.onLoad();
 
-    debugMode = true;
-  
+    debugMode = false;
+
     cameraPosition = size/2;
-    camera.followVector2(cameraPosition);
+    camera.followVector2(cameraPosition, 
+      worldBounds: Rect.fromLTRB(0, 0, 2000, 2000));
+
+    backgroundLayer.size = size;
+    add(backgroundLayer);
 
     cardLayer.size = size;
     add(cardLayer);
@@ -120,12 +168,130 @@ class MyGame extends FlameBlocGame
 
     physicalLevel.callback = () {
       CardModel model = CardModel(const Uuid().v4(), "Физический уровень", 
-      100, 100, //position
-      Colors.redAccent.value, false, false, "", 50, 400, 600);
+      cameraPosition.x, cameraPosition.y,
+      Colors.red[300]!.value, false, false, "", -6, 400, 500);
+
+      read<CardBloc>().addCard(model);
+    };
+    emotionalLevel.callback = () {
+      CardModel model = CardModel(const Uuid().v4(), "Эмоциональный уровень", 
+      cameraPosition.x, cameraPosition.y,
+      Colors.orange[300]!.value, false, false, "", -4, 400, 500);
+
+      read<CardBloc>().addCard(model);
+    };
+    mentalLevel.callback = () {
+      CardModel model = CardModel(const Uuid().v4(), "Ментальный уровень", 
+      cameraPosition.x, cameraPosition.y,
+      Colors.yellow[300]!.value, false, false, "", -2, 400, 500);
+
+      read<CardBloc>().addCard(model);
+    };
+    spiritLevel.callback = () {
+      CardModel model = CardModel(const Uuid().v4(), "Духовный уровень", 
+      cameraPosition.x, cameraPosition.y,
+      Colors.blue[300]!.value, false, false, "", 0, 400, 500);
 
       read<CardBloc>().addCard(model);
     };
     add(physicalLevel);
+    add(emotionalLevel);
+    add(mentalLevel);
+    add(spiritLevel);
+
+    physicalKnowing.callback = () {
+      CardModel model = CardModel(const Uuid().v4(), "Осознание", 
+        cameraPosition.x, cameraPosition.y, //position
+        Colors.red[600]!.value,
+        true, false,
+        // TODO random
+        "Здоровье", 11, 60, 80);
+      read<CardBloc>().addCard(model);
+    };
+    emotionalKnowing.callback = () {
+      CardModel model = CardModel(const Uuid().v4(), "Осознание", 
+        cameraPosition.x, cameraPosition.y, //position
+        Colors.orange[600]!.value,
+        true, false,
+        // TODO random
+        "Здоровье", 11, 60, 80);
+      read<CardBloc>().addCard(model);
+    };
+    mentalKnowing.callback = () {
+      CardModel model = CardModel(const Uuid().v4(), "Осознание", 
+        cameraPosition.x, cameraPosition.y, //position
+        Colors.yellow[600]!.value,
+        true, false,
+        // TODO random
+        "Здоровье", 11, 60, 80);
+      read<CardBloc>().addCard(model);
+    };
+    spiritKnowing.callback = () {
+      CardModel model = CardModel(const Uuid().v4(), "Осознание", 
+        cameraPosition.x, cameraPosition.y, //position
+        Colors.blue[600]!.value, 
+        true, false,
+        // TODO random
+        "Здоровье", 11, 60, 80);
+      read<CardBloc>().addCard(model);
+    };
+    add(physicalKnowing);
+    add(emotionalKnowing);
+    add(mentalKnowing);
+    add(spiritKnowing);
+
+    angelButton.callback = () {
+      CardModel model = CardModel(const Uuid().v4(), "Ангел", 
+        cameraPosition.x, cameraPosition.y, //position
+        Colors.white.value, true, false,
+        // TODO random
+        "Ангел: Радость", 10, 120, 60);
+      read<CardBloc>().addCard(model);
+    };
+    add(angelButton);
+    // TODO
+    insightButton.callback = () {
+      CardModel model = CardModel(const Uuid().v4(), "Прозрение", 
+        cameraPosition.x, cameraPosition.y, //position
+        Colors.white.value, true, false,
+        // TODO random 
+        "Вы справились с завистью. Возьмите 3 осознания.", 11, 120, 120);
+      read<CardBloc>().addCard(model);
+    };
+    add(insightButton);
+    // TODO
+    setbackButton.callback = () {
+      CardModel model = CardModel(const Uuid().v4(), "Препятствие", 
+        cameraPosition.x, cameraPosition.y, //position
+        Colors.white.value, true, false,
+        // TODO random 
+        "Склонность к сплетням. Возьмите 2 боли.", 11, 120, 120);
+      read<CardBloc>().addCard(model);
+    };
+    add(setbackButton);
+    serviceButton.callback = () {
+      CardModel model = CardModel(const Uuid().v4(), "Служение", 
+      cameraPosition.x, cameraPosition.y, //position
+      Colors.white.value, false, false, "", 11, 60, 80);
+      read<CardBloc>().addCard(model);
+    };
+    add(serviceButton);
+    painButton.callback = () {
+      CardModel model = CardModel(const Uuid().v4(), "Боль", 
+      cameraPosition.x, cameraPosition.y, //position
+      Colors.white.value, false, false, "", 11, 60, 60);
+      read<CardBloc>().addCard(model);
+    };
+    add(painButton);
+    feedbackButton.callback = () {
+      CardModel model = CardModel(const Uuid().v4(), "Обратная связь", 
+        cameraPosition.x, cameraPosition.y, //position
+        Colors.white.value, true, false,
+        // TODO random 
+        "Вселенная поддержала вас. Возьмите 2 осознания.", 11, 120, 120);
+      read<CardBloc>().addCard(model);
+    };
+    add(feedbackButton);
 
     add(dice);
     add(intuition);
@@ -146,6 +312,24 @@ class MyGame extends FlameBlocGame
   void onAttach() {
     // TODO when bloc state available
     super.onAttach();
+  }
+
+  @override
+  void onGameResize(Vector2 canvasSize) {
+    cameraPosition.x = canvasSize.x/2;
+    cameraPosition.y = canvasSize.y/2;
+    super.onGameResize(canvasSize);
+  }
+
+  @override
+  void onScroll(PointerScrollInfo info) {
+    if (cameraPosition.y + info.scrollDelta.game.y > size.y/2) {
+      cameraPosition.y += info.scrollDelta.game.y;
+    }
+    if (cameraPosition.x + info.scrollDelta.game.x > size.x/2) {
+      cameraPosition.x += info.scrollDelta.game.x;
+    }
+    super.onScroll(info);
   }
 }
 
@@ -277,12 +461,14 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     newChipColor = val;
   }
 
+  // Request Card
   void onOk(FlameBlocGame game) {
     Size size = textSize(textController.text, 200);
 
-    CardModel model = CardModel(const Uuid().v4(), textController.text, 
-      100, 100, //position
-      newColor.value, false, false, "", 50, 
+    CardModel model = CardModel(const Uuid().v4(), 
+      textController.text, 
+      game.size.x/2, game.size.y/2, //position
+      newColor.value, false, false, "", 0, 
       max(size.width, 100), max(size.height, 200));
 
     game.read<CardBloc>().addCard(model);
@@ -293,9 +479,10 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
     game.overlays.remove(requestIdentifier);
   }
 
-void onChipOk(FlameBlocGame game) {
+  // Chip card
+  void onChipOk(FlameBlocGame game) {
     ChipModel model = ChipModel(const Uuid().v4(), 
-      100, 100, //position
+      game.size.x/2, game.size.y/2, //position
       newChipColor.value);
 
     game.read<ChipBloc>().addChip(model);

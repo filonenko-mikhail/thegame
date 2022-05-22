@@ -16,25 +16,30 @@ var logger = Logger();
 
 void main() {
 
-  final httpLink = HttpLink(
-    'http://127.0.0.1:8080/query',
-  );
+  const endpoint = 'http://127.0.0.1:8080/query';
+  const wsendpoint = 'ws://127.0.0.1:8080/query';
+
+  final httpLink = HttpLink(endpoint);
+  final wslink = WebSocketLink(wsendpoint);
+
+  final link = Link.split((request) => request.isSubscription, wslink, httpLink);
+
   var clientId = const Uuid().v4();
 
   runApp(MultiBlocProvider(
     providers: [
       BlocProvider<DiceBloc>(
-        create: (BuildContext context) => DiceBloc(clientId, httpLink, 
-          const Duration(seconds: 4))),
+        create: (BuildContext context) => DiceBloc(clientId, link, 
+          const Duration(seconds: 30))),
       BlocProvider<IntuitionBloc>(
-        create: (BuildContext context) => IntuitionBloc(clientId, httpLink, 
-          const Duration(seconds: 4))),
+        create: (BuildContext context) => IntuitionBloc(clientId, link, 
+          const Duration(seconds: 30))),
       BlocProvider<CardBloc>(
-        create: (BuildContext context) => CardBloc(clientId, httpLink, 
-          const Duration(seconds: 4), const Duration(seconds: 1))),
+        create: (BuildContext context) => CardBloc(clientId, link, 
+          const Duration(seconds: 30), const Duration(seconds: 1))),
       BlocProvider<ChipBloc>(
-        create: (BuildContext context) => ChipBloc(clientId, httpLink, 
-          const Duration(seconds: 4), const Duration(seconds: 1))),
+        create: (BuildContext context) => ChipBloc(clientId, link, 
+          const Duration(seconds: 30), const Duration(seconds: 1))),
     ], 
     child: const MyApp()));
 }

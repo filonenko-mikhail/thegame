@@ -62,6 +62,11 @@ input CardFlipPayload {
   flip: Boolean!
 }
 
+input CardPrioPayload {
+  id: ID!
+  prio: Int!
+}
+
 input CardRemovePayload {
   id: ID!
 }
@@ -75,6 +80,7 @@ type CardMutations {
   move(payload: CardMovePayload): Card! @goField(forceResolver: true)
   remove(payload: CardRemovePayload): Card! @goField(forceResolver: true)
   flip(payload: CardFlipPayload): Card! @goField(forceResolver: true)
+  prio(payload: CardPrioPayload): Card! @goField(forceResolver: true)
 }
 
 type Chip {
@@ -119,4 +125,12 @@ type Mutation {
   card: CardMutations!
   chip: ChipMutations!
   intuition: IntuitionMutations!
+}
+
+type Update {
+  id: String!
+}
+
+type Subscription {
+  updates: [Update!]
 }

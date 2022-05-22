@@ -46,6 +46,12 @@ type CardMutations struct {
 	Move   *Card `json:"move"`
 	Remove *Card `json:"remove"`
 	Flip   *Card `json:"flip"`
+	Prio   *Card `json:"prio"`
+}
+
+type CardPrioPayload struct {
+	ID   string `json:"id"`
+	Prio int    `json:"prio"`
 }
 
 type CardQueries struct {
@@ -100,4 +106,8 @@ type IntuitionMutations struct {
 
 type IntuitionQueries struct {
 	Val bool `json:"val"`
+}
+
+type Update struct {
+	ID string `json:"id"`
 }

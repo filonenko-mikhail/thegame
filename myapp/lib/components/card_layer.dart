@@ -32,6 +32,7 @@ class CardLayer extends PositionComponent
       cards[k] = card;
       add(card);
     }
+    reorderChildren();
   }
   
   @override

@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -46,6 +47,7 @@ type ResolverRoot interface {
 	IntuitionQueries() IntuitionQueriesResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Subscription() SubscriptionResolver
 }
 
 type DirectiveRoot struct {
@@ -70,6 +72,7 @@ type ComplexityRoot struct {
 		Add    func(childComplexity int, payload model.CardAddPayload) int
 		Flip   func(childComplexity int, payload *model.CardFlipPayload) int
 		Move   func(childComplexity int, payload *model.CardMovePayload) int
+		Prio   func(childComplexity int, payload *model.CardPrioPayload) int
 		Remove func(childComplexity int, payload *model.CardRemovePayload) int
 	}
 
@@ -123,6 +126,14 @@ type ComplexityRoot struct {
 		Dice      func(childComplexity int) int
 		Intuition func(childComplexity int) int
 	}
+
+	Subscription struct {
+		Updates func(childComplexity int) int
+	}
+
+	Update struct {
+		ID func(childComplexity int) int
+	}
 }
 
 type CardMutationsResolver interface {
@@ -130,6 +141,7 @@ type CardMutationsResolver interface {
 	Move(ctx context.Context, obj *model.CardMutations, payload *model.CardMovePayload) (*model.Card, error)
 	Remove(ctx context.Context, obj *model.CardMutations, payload *model.CardRemovePayload) (*model.Card, error)
 	Flip(ctx context.Context, obj *model.CardMutations, payload *model.CardFlipPayload) (*model.Card, error)
+	Prio(ctx context.Context, obj *model.CardMutations, payload *model.CardPrioPayload) (*model.Card, error)
 }
 type CardQueriesResolver interface {
 	List(ctx context.Context, obj *model.CardQueries) ([]*model.Card, error)
@@ -165,6 +177,9 @@ type QueryResolver interface {
 	Card(ctx context.Context) (*model.CardQueries, error)
 	Chip(ctx context.Context) (*model.ChipQueries, error)
 	Intuition(ctx context.Context) (*model.IntuitionQueries, error)
+}
+type SubscriptionResolver interface {
+	Updates(ctx context.Context) (<-chan []*model.Update, error)
 }
 
 type executableSchema struct {
@@ -294,6 +309,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.CardMutations.Move(childComplexity, args["payload"].(*model.CardMovePayload)), true
+
+	case "CardMutations.prio":
+		if e.complexity.CardMutations.Prio == nil {
+			break
+		}
+
+		args, err := ec.field_CardMutations_prio_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.CardMutations.Prio(childComplexity, args["payload"].(*model.CardPrioPayload)), true
 
 	case "CardMutations.remove":
 		if e.complexity.CardMutations.Remove == nil {
@@ -479,6 +506,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Intuition(childComplexity), true
 
+	case "Subscription.updates":
+		if e.complexity.Subscription.Updates == nil {
+			break
+		}
+
+		return e.complexity.Subscription.Updates(childComplexity), true
+
+	case "Update.id":
+		if e.complexity.Update.ID == nil {
+			break
+		}
+
+		return e.complexity.Update.ID(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -490,6 +531,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCardAddPayload,
 		ec.unmarshalInputCardFlipPayload,
 		ec.unmarshalInputCardMovePayload,
+		ec.unmarshalInputCardPrioPayload,
 		ec.unmarshalInputCardRemovePayload,
 		ec.unmarshalInputChipAddPayload,
 		ec.unmarshalInputChipMovePayload,
@@ -521,6 +563,23 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
 			data := ec._Mutation(ctx, rc.Operation.SelectionSet)
 			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
+	case ast.Subscription:
+		next := ec._Subscription(ctx, rc.Operation.SelectionSet)
+
+		var buf bytes.Buffer
+		return func(ctx context.Context) *graphql.Response {
+			buf.Reset()
+			data := next(ctx)
+
+			if data == nil {
+				return nil
+			}
 			data.MarshalGQL(&buf)
 
 			return &graphql.Response{
@@ -617,6 +676,11 @@ input CardFlipPayload {
   flip: Boolean!
 }
 
+input CardPrioPayload {
+  id: ID!
+  prio: Int!
+}
+
 input CardRemovePayload {
   id: ID!
 }
@@ -630,6 +694,7 @@ type CardMutations {
   move(payload: CardMovePayload): Card! @goField(forceResolver: true)
   remove(payload: CardRemovePayload): Card! @goField(forceResolver: true)
   flip(payload: CardFlipPayload): Card! @goField(forceResolver: true)
+  prio(payload: CardPrioPayload): Card! @goField(forceResolver: true)
 }
 
 type Chip {
@@ -674,6 +739,14 @@ type Mutation {
   card: CardMutations!
   chip: ChipMutations!
   intuition: IntuitionMutations!
+}
+
+type Update {
+  id: String!
+}
+
+type Subscription {
+  updates: [Update!]
 }
 `, BuiltIn: false},
 }
@@ -720,6 +793,21 @@ func (ec *executionContext) field_CardMutations_move_args(ctx context.Context, r
 	if tmp, ok := rawArgs["payload"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("payload"))
 		arg0, err = ec.unmarshalOCardMovePayload2ᚖthegameᚋgraphᚋmodelᚐCardMovePayload(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["payload"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_CardMutations_prio_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.CardPrioPayload
+	if tmp, ok := rawArgs["payload"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("payload"))
+		arg0, err = ec.unmarshalOCardPrioPayload2ᚖthegameᚋgraphᚋmodelᚐCardPrioPayload(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1671,6 +1759,85 @@ func (ec *executionContext) fieldContext_CardMutations_flip(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _CardMutations_prio(ctx context.Context, field graphql.CollectedField, obj *model.CardMutations) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CardMutations_prio(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.CardMutations().Prio(rctx, obj, fc.Args["payload"].(*model.CardPrioPayload))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Card)
+	fc.Result = res
+	return ec.marshalNCard2ᚖthegameᚋgraphᚋmodelᚐCard(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CardMutations_prio(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CardMutations",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Card_id(ctx, field)
+			case "text":
+				return ec.fieldContext_Card_text(ctx, field)
+			case "x":
+				return ec.fieldContext_Card_x(ctx, field)
+			case "y":
+				return ec.fieldContext_Card_y(ctx, field)
+			case "color":
+				return ec.fieldContext_Card_color(ctx, field)
+			case "flipable":
+				return ec.fieldContext_Card_flipable(ctx, field)
+			case "flip":
+				return ec.fieldContext_Card_flip(ctx, field)
+			case "fliptext":
+				return ec.fieldContext_Card_fliptext(ctx, field)
+			case "prio":
+				return ec.fieldContext_Card_prio(ctx, field)
+			case "sizex":
+				return ec.fieldContext_Card_sizex(ctx, field)
+			case "sizey":
+				return ec.fieldContext_Card_sizey(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Card", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_CardMutations_prio_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CardQueries_list(ctx context.Context, field graphql.CollectedField, obj *model.CardQueries) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CardQueries_list(ctx, field)
 	if err != nil {
@@ -2457,6 +2624,8 @@ func (ec *executionContext) fieldContext_Mutation_card(ctx context.Context, fiel
 				return ec.fieldContext_CardMutations_remove(ctx, field)
 			case "flip":
 				return ec.fieldContext_CardMutations_flip(ctx, field)
+			case "prio":
+				return ec.fieldContext_CardMutations_prio(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CardMutations", field.Name)
 		},
@@ -2880,6 +3049,105 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 				return ec.fieldContext___Schema_directives(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type __Schema", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_updates(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_updates(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().Updates(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		res, ok := <-resTmp.(<-chan []*model.Update)
+		if !ok {
+			return nil
+		}
+		return graphql.WriterFunc(func(w io.Writer) {
+			w.Write([]byte{'{'})
+			graphql.MarshalString(field.Alias).MarshalGQL(w)
+			w.Write([]byte{':'})
+			ec.marshalOUpdate2ᚕᚖthegameᚋgraphᚋmodelᚐUpdateᚄ(ctx, field.Selections, res).MarshalGQL(w)
+			w.Write([]byte{'}'})
+		})
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_updates(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Update_id(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Update", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Update_id(ctx context.Context, field graphql.CollectedField, obj *model.Update) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Update_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Update_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Update",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4831,6 +5099,37 @@ func (ec *executionContext) unmarshalInputCardMovePayload(ctx context.Context, o
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputCardPrioPayload(ctx context.Context, obj interface{}) (model.CardPrioPayload, error) {
+	var it model.CardPrioPayload
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("id"))
+			it.ID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "prio":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("prio"))
+			it.Prio, err = ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCardRemovePayload(ctx context.Context, obj interface{}) (model.CardRemovePayload, error) {
 	var it model.CardRemovePayload
 	asMap := map[string]interface{}{}
@@ -5126,6 +5425,26 @@ func (ec *executionContext) _CardMutations(ctx context.Context, sel ast.Selectio
 					}
 				}()
 				res = ec._CardMutations_flip(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "prio":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CardMutations_prio(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -5712,6 +6031,54 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				return ec._Query___schema(ctx, field)
 			})
 
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var subscriptionImplementors = []string{"Subscription"}
+
+func (ec *executionContext) _Subscription(ctx context.Context, sel ast.SelectionSet) func(ctx context.Context) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, subscriptionImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Subscription",
+	})
+	if len(fields) != 1 {
+		ec.Errorf(ctx, "must subscribe to exactly one stream")
+		return nil
+	}
+
+	switch fields[0].Name {
+	case "updates":
+		return ec._Subscription_updates(ctx, fields[0])
+	default:
+		panic("unknown field " + strconv.Quote(fields[0].Name))
+	}
+}
+
+var updateImplementors = []string{"Update"}
+
+func (ec *executionContext) _Update(ctx context.Context, sel ast.SelectionSet, obj *model.Update) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, updateImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Update")
+		case "id":
+
+			out.Values[i] = ec._Update_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6354,6 +6721,16 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) marshalNUpdate2ᚖthegameᚋgraphᚋmodelᚐUpdate(ctx context.Context, sel ast.SelectionSet, v *model.Update) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Update(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
 	return ec.___Directive(ctx, sel, &v)
 }
@@ -6649,6 +7026,14 @@ func (ec *executionContext) unmarshalOCardMovePayload2ᚖthegameᚋgraphᚋmodel
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalOCardPrioPayload2ᚖthegameᚋgraphᚋmodelᚐCardPrioPayload(ctx context.Context, v interface{}) (*model.CardPrioPayload, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputCardPrioPayload(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOCardRemovePayload2ᚖthegameᚋgraphᚋmodelᚐCardRemovePayload(ctx context.Context, v interface{}) (*model.CardRemovePayload, error) {
 	if v == nil {
 		return nil, nil
@@ -6671,6 +7056,53 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	}
 	res := graphql.MarshalString(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOUpdate2ᚕᚖthegameᚋgraphᚋmodelᚐUpdateᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Update) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNUpdate2ᚖthegameᚋgraphᚋmodelᚐUpdate(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {

@@ -9,6 +9,7 @@ import (
 	"thegame/graph/generated"
 	"thegame/graph/model"
 
+	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 )
 
@@ -37,6 +38,8 @@ func (r *cardMutationsResolver) Add(ctx context.Context, obj *model.CardMutation
 	}
 	r.Card.Store(payload.ID, item)
 
+	Update(r.ChatMessages, r.ChatObservers, r.mu, payload.ID)
+
 	return item, nil
 }
 
@@ -53,6 +56,9 @@ func (r *cardMutationsResolver) Move(ctx context.Context, obj *model.CardMutatio
 		item := val.(*model.Card)
 		item.X = payload.X
 		item.Y = payload.Y
+
+		Update(r.ChatMessages, r.ChatObservers, r.mu, payload.ID)
+
 		return item, nil
 	}
 	return nil, fmt.Errorf("no card for id: %s", payload.ID)
@@ -68,6 +74,9 @@ func (r *cardMutationsResolver) Remove(ctx context.Context, obj *model.CardMutat
 
 		item := val.(*model.Card)
 		r.Card.Delete(payload.ID)
+
+		Update(r.ChatMessages, r.ChatObservers, r.mu, payload.ID)
+
 		return item, nil
 	}
 
@@ -86,6 +95,29 @@ func (r *cardMutationsResolver) Flip(ctx context.Context, obj *model.CardMutatio
 
 		item := val.(*model.Card)
 		item.Flip = payload.Flip
+
+		Update(r.ChatMessages, r.ChatObservers, r.mu, payload.ID)
+
+		return item, nil
+	}
+	return nil, fmt.Errorf("no card for id: %s", payload.ID)
+}
+
+func (r *cardMutationsResolver) Prio(ctx context.Context, obj *model.CardMutations, payload *model.CardPrioPayload) (*model.Card, error) {
+	if val, ok := r.Card.Load(payload.ID); ok {
+		_, err := r.Db.ExecContext(ctx,
+			`UPDATE cards SET prio = ? WHERE card_id = ?`,
+			payload.Prio, payload.ID)
+		if err != nil {
+			logrus.Info(err)
+			return nil, err
+		}
+
+		item := val.(*model.Card)
+		item.Prio = payload.Prio
+
+		Update(r.ChatMessages, r.ChatObservers, r.mu, payload.ID)
+
 		return item, nil
 	}
 	return nil, fmt.Errorf("no card for id: %s", payload.ID)
@@ -99,6 +131,7 @@ func (r *cardQueriesResolver) List(ctx context.Context, obj *model.CardQueries) 
 			result = append(result, item)
 			return true
 		})
+
 	return result, nil
 }
 
@@ -120,6 +153,8 @@ func (r *chipMutationsResolver) Add(ctx context.Context, obj *model.ChipMutation
 	}
 	r.Chip.Store(payload.ID, item)
 
+	Update(r.ChatMessages, r.ChatObservers, r.mu, payload.ID)
+
 	return item, nil
 }
 
@@ -136,6 +171,9 @@ func (r *chipMutationsResolver) Move(ctx context.Context, obj *model.ChipMutatio
 		item := val.(*model.Chip)
 		item.X = payload.X
 		item.Y = payload.Y
+
+		Update(r.ChatMessages, r.ChatObservers, r.mu, payload.ID)
+
 		return item, nil
 	}
 	return nil, fmt.Errorf("no card for id: %s", payload.ID)
@@ -151,6 +189,9 @@ func (r *chipMutationsResolver) Remove(ctx context.Context, obj *model.ChipMutat
 
 		item := val.(*model.Chip)
 		r.Chip.Delete(payload.ID)
+
+		Update(r.ChatMessages, r.ChatObservers, r.mu, payload.ID)
+
 		return item, nil
 	}
 
@@ -170,6 +211,9 @@ func (r *chipQueriesResolver) List(ctx context.Context, obj *model.ChipQueries) 
 
 func (r *diceMutationsResolver) Set(ctx context.Context, obj *model.DiceMutations, val int) (int, error) {
 	r.Dice = val
+
+	Update(r.ChatMessages, r.ChatObservers, r.mu, "Dice")
+
 	return r.Dice, nil
 }
 
@@ -179,6 +223,9 @@ func (r *diceQueriesResolver) Val(ctx context.Context, obj *model.DiceQueries) (
 
 func (r *intuitionMutationsResolver) Set(ctx context.Context, obj *model.IntuitionMutations, val bool) (bool, error) {
 	r.Intuition = val
+
+	Update(r.ChatMessages, r.ChatObservers, r.mu, "Intuition")
+
 	return r.Intuition, nil
 }
 
@@ -218,6 +265,28 @@ func (r *queryResolver) Intuition(ctx context.Context) (*model.IntuitionQueries,
 	return &model.IntuitionQueries{}, nil
 }
 
+func (r *subscriptionResolver) Updates(ctx context.Context) (<-chan []*model.Update, error) {
+	// Create an ID and channel for each active subscription. We will push changes into this channel.
+	// When a new subscription is created by the client, this resolver will fire first.
+	id := uuid.NewString()
+	msgs := make(chan []*model.Update, 1)
+
+	// Start a goroutine to allow for cleaning up subscriptions that are disconnected.
+	// This go routine will only get past Done() when a client terminates the subscription. This allows us
+	// to only then remove the reference from the list of ChatObservers since it is no longer needed.
+	go func() {
+		<-ctx.Done()
+		r.mu.Lock()
+		delete(r.ChatObservers, id)
+		r.mu.Unlock()
+	}()
+	r.mu.Lock()
+	// Keep a reference of the channel so that we can push changes into it when new messages are posted.
+	r.ChatObservers[id] = msgs
+	r.mu.Unlock()
+	return msgs, nil
+}
+
 // CardMutations returns generated.CardMutationsResolver implementation.
 func (r *Resolver) CardMutations() generated.CardMutationsResolver { return &cardMutationsResolver{r} }
 
@@ -252,6 +321,9 @@ func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResol
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+// Subscription returns generated.SubscriptionResolver implementation.
+func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
+
 type cardMutationsResolver struct{ *Resolver }
 type cardQueriesResolver struct{ *Resolver }
 type chipMutationsResolver struct{ *Resolver }
@@ -262,3 +334,4 @@ type intuitionMutationsResolver struct{ *Resolver }
 type intuitionQueriesResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }

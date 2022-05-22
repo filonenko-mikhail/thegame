@@ -25,6 +25,8 @@ class PushButton extends HudMarginComponent<FlameBlocGame>
   String title;
   Function? callback;
 
+  Paint paint = Paint()..color=Colors.grey;
+
   PushButton(this.title, {
     EdgeInsets? margin,
     Vector2? size,
@@ -33,6 +35,9 @@ class PushButton extends HudMarginComponent<FlameBlocGame>
   @override
   void render(Canvas canvas) {
     super.render(canvas);
+
+    canvas.drawRect(Rect.fromLTRB(0, 0, size.x, size.y), paint);
+
     if (!isHovered || tapdown) {
       regularTextPaint.render(canvas, title, size/2, 
       anchor: Anchor.center);

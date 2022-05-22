@@ -25,11 +25,12 @@ class DiceState {
 
 
 class DiceBloc extends Bloc<DiceEvent,DiceState> {
-  final HttpLink link;
+  final Link link;
   final String clientId;
   final GraphQLClient client;
   final Duration pollInterval;
   late final Completer<bool> task;
+  late final Stream subscription;
 
   static final policies = Policies(
     fetch: FetchPolicy.networkOnly,
@@ -50,15 +51,35 @@ class DiceBloc extends Bloc<DiceEvent,DiceState> {
       emit(newstate);
     });
 
+    final subscriptionRequest = gql(
+      r'''
+        subscription {
+          updates {
+            id
+          }
+        }
+      ''',
+    );
+    subscription = client.subscribe(
+      SubscriptionOptions(
+        document: subscriptionRequest
+      ),
+    );
+    subscription.listen(onMessage);
+
     task = periodic(pollInterval, poll);
   }
 
+  void onMessage(event) {
+    poll(event);
+  }
+
   void poll(event) async {
-    const String diceQuery = r'''
+    final diceQuery = gql(r'''
       { dice { val } }
-    ''';
+    ''');
     final QueryOptions options = QueryOptions(
-        document: gql(diceQuery)
+        document: diceQuery
       );
 
       final QueryResult result = await client.query(options);
@@ -72,16 +93,16 @@ class DiceBloc extends Bloc<DiceEvent,DiceState> {
   }
 
   void sendDiceVal(int val) async {
-    const String diceValMutation = r'''
+    final diceValMutation = gql(r'''
       mutation ($val: Int!){
         dice {
           set(val: $val)
         }
       }
-    ''';
+    ''');
 
     final MutationOptions options = MutationOptions(
-      document: gql(diceValMutation),
+      document: diceValMutation,
       variables: <String, dynamic>{
         'val': val,
       },

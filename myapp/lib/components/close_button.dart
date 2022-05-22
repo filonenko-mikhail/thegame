@@ -7,86 +7,81 @@ import 'package:flame/input.dart';
 
 var logger = Logger();
 
-class CloseButton extends PositionComponent with Tappable {
-  double _angle;
+class CloseButton extends PositionComponent 
+  with Tappable, Hoverable {
+  double closeAngle;
   double velocity;
 
-  final paint = Paint();
-  final circlePaint = Paint()
+  static final paint = Paint();
+  static final hoverPaint = Paint()
+          ..strokeWidth = 3;
+  static final circlePaint = Paint()
           ..style = PaintingStyle.fill
-          ..color = const Color(0x77FFFFFF);
-  final fillPaint = Paint()..style = PaintingStyle.fill
-          ..color = const Color(0x77FFFFFF);
-  final strokePaint = Paint()..style = PaintingStyle.stroke
-          ..color = const Color(0x77FFFFFF);
+          ..color = const Color(0x77AAAAAA);
+  static final fillPaint = Paint()..style = PaintingStyle.fill
+          ..color = const Color(0xFF333333);
+  static final strokePaint = Paint()..style = PaintingStyle.stroke
+          ..color = const Color(0x77000000);
 
   CloseButton({Vector2? position})
-      : _angle = 0,
-        velocity = 0,
-        super(
-          position: position,
-        );
+      :closeAngle = 0, velocity = 0,
+        super(position: position);
 
   @override
   void render(Canvas canvas) {
     super.render(canvas);
 
-    double radius = min(size.x/2, size.y/2);
+    double radius = min(size.x/2, size.y/2) - 1;
 
     canvas.drawCircle((size/2).toOffset(), radius, circlePaint);
 
     // Cross
-    canvas.drawLine(Offset(radius / 2, radius / 2),
-        Offset(radius + radius / 2 , radius + radius / 2), paint);
-    canvas.drawLine(Offset(radius / 2, radius + radius / 2),
-        Offset(radius + radius / 2, radius / 2), paint);
-
+    Paint currentPaint = paint;
+    if (isHovered) {
+      currentPaint = hoverPaint;
+    }
+    canvas.drawLine(Offset(size.x/4, size.y/4),
+      Offset(3*size.x/4, 3*size.y/4), currentPaint);
+    canvas.drawLine(Offset(size.x/4, 3*size.y/4),
+      Offset(3*size.x/4, size.y/4), currentPaint);
+    
     canvas.drawArc(
-      Rect.fromCircle(center: (size/2).toOffset(), radius: radius), 0, _angle, true, fillPaint);
+      Rect.fromCircle(center: (size/2).toOffset(), radius: radius), 0, closeAngle, true, fillPaint);
 
-    canvas.drawCircle(
-        (size/2).toOffset(), radius, strokePaint);
+    canvas.drawCircle((size/2).toOffset(), radius, strokePaint);
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    _angle += velocity;
-    if (_angle > 2 * pi) {
+    closeAngle += velocity;
+    if (closeAngle > 2 * pi) {
       parent?.removeFromParent();
     }
   }
 
   @override
-  bool containsPoint(Vector2 point) {
-    final Vector2 local = absoluteToLocal(point);
-    double radius = min(size.x, size.y);
-    return local.x * local.x + local.y * local.y < radius * radius;
-  }
-
-  @override
   bool onTapDown(TapDownInfo event) {
-    velocity = 3 * pi / 360;      
+    velocity = pi / 30;      
     return false;
   }
 
   @override
   bool onTapUp(TapUpInfo event) {
     velocity = 0;
-    _angle = 0;
+    closeAngle = 0;
     return false;
   }
 
   @override
   bool onTapCancel() {
     velocity = 0;
-    _angle = 0;
+    closeAngle = 0;
     return false;
   }
 
   @override
   void onMount() {
-    // TODO: implement onMount
     onParentResize();
     var positionParent = parent as PositionComponent;
     positionParent.size.addListener(onParentResize);

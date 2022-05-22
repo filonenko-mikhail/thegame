@@ -1,7 +1,6 @@
 
 import 'dart:async';
 
-import 'package:flutter/material.dart';
 import 'package:flame/input.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:graphql/client.dart';
@@ -49,7 +48,7 @@ class ChipList extends ChipEvent {
 } 
 
 class ChipBloc extends Bloc<ChipEvent,ChipState> {
-  final HttpLink link;
+  final Link link;
   final String clientId;
   final GraphQLClient client;
   int lastSend;
@@ -58,6 +57,7 @@ class ChipBloc extends Bloc<ChipEvent,ChipState> {
   late final Completer<bool> task;
   late final Completer<bool> task2;
   Map<String, Vector2> toSendXY;
+  late final Stream subscription;
 
   static final policies = Policies(
     fetch: FetchPolicy.networkOnly,
@@ -81,17 +81,37 @@ class ChipBloc extends Bloc<ChipEvent,ChipState> {
       emit(newstate);
     });
 
+    final subscriptionRequest = gql(
+      r'''
+        subscription {
+          updates {
+            id
+          }
+        }
+      ''',
+    );
+    subscription = client.subscribe(
+      SubscriptionOptions(
+        document: subscriptionRequest
+      ),
+    );
+    subscription.listen(onMessage);
+
     task = periodic(pollInterval, poll);
     task2 = periodic(sendInterval, send);
   }
 
+  void onMessage(event) {
+    poll(event);
+  }
+
   // timer
   void poll(event) async {
-    const String chipQuery = r'''
+    final chipQuery = gql(r'''
       { chip { list { id x y color} } }
-    ''';
+    ''');
     final QueryOptions options = QueryOptions(
-        document: gql(chipQuery)
+        document: chipQuery
     );
 
     final QueryResult result = await client.query(options);
@@ -106,20 +126,19 @@ class ChipBloc extends Bloc<ChipEvent,ChipState> {
 
   // timer
   void send(event) async {
-    const String mutation = r'''
-        mutation ($id: ID! $x: Float! $y: Float!
-        ){
+    final mutation = gql(r'''
+        mutation ($id: ID! $x: Float! $y: Float!){
           chip {
             move(payload:{id:$id x:$x y:$y}) {
               id
             }
           }
         }
-      ''';
+      ''');
 
     toSendXY.forEach((key, value) async {
       final MutationOptions options = MutationOptions(
-        document: gql(mutation),
+        document: mutation,
         variables: <String, dynamic>{
           'id': key,
           'x':  value.x,
@@ -138,7 +157,7 @@ class ChipBloc extends Bloc<ChipEvent,ChipState> {
   }
 
   void addChip(ChipModel model) async {
-    const String mutation = r'''
+    final mutation = gql(r'''
       mutation ($payload: ChipAddPayload!){
         chip {
           add(payload:$payload) {
@@ -146,15 +165,16 @@ class ChipBloc extends Bloc<ChipEvent,ChipState> {
           }
         }
       }
-    ''';
+    ''');
 
     int now = DateTime.now().millisecondsSinceEpoch;
 
     if (now - lastSend > 200) {      
       final MutationOptions options = MutationOptions(
-        document: gql(mutation),
+        document: mutation,
         variables: {
-          "payload": model.toJson()
+          "payload": model.toJson(),
+          "client": clientId,
         }
       );
 
@@ -174,7 +194,7 @@ class ChipBloc extends Bloc<ChipEvent,ChipState> {
   }
 
   void removeChip(String id) async {
-    const String mutation = r'''
+    final mutation = gql(r'''
       mutation ($id: ID!){
         chip {
           remove(payload:{id:$id}) {
@@ -182,12 +202,12 @@ class ChipBloc extends Bloc<ChipEvent,ChipState> {
           }
         }
       }
-    ''';
+    ''');
 
     int now = DateTime.now().millisecondsSinceEpoch;
     if (now - lastSend > 20) {      
       final MutationOptions options = MutationOptions(
-        document: gql(mutation),
+        document: mutation,
         variables: <String, dynamic>{
           'id': id,
         },

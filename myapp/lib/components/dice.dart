@@ -53,8 +53,8 @@ class Dice extends HudMarginComponent<FlameBlocGame>
   static final random = Random.secure();
 
   bool tapdown = false;
-  bool inProcess = false;
   double buttonAngle = 2*pi;
+  int localVal = 1;
 
   Dice({
     EdgeInsets? margin,
@@ -87,7 +87,9 @@ class Dice extends HudMarginComponent<FlameBlocGame>
       canvas.save();
       canvas.rotate(i*(2*pi/6));
       canvas.translate(0, -radius);
-      if (state?.val == i + 1) {
+
+      //if (state?.val == i + 1) {
+      if (localVal == i + 1) {
         painter = redTextPaint;
       } else {
         if (isHovered) {
@@ -108,6 +110,11 @@ class Dice extends HudMarginComponent<FlameBlocGame>
 
     if (buttonAngle < 2*pi) {
       buttonAngle += (2*pi)/180;
+      localVal = nextRandom(1, 7);
+
+      if (buttonAngle >= 2*pi) {
+        gameRef.read<DiceBloc>().sendDiceVal(localVal);
+      }
     }
   }
 
@@ -129,18 +136,7 @@ class Dice extends HudMarginComponent<FlameBlocGame>
   bool onTapUp(TapUpInfo event) {
     tapdown = false;
 
-    // move back on state change
-    inProcess = true;
-
     buttonAngle = 0;
-
-    var limit = nextRandom(5, 30);
-    var val = nextRandom(1, 7);
-    for (var i = 1; i < limit; i++) {
-      val = nextRandom(1, 7);
-    }
-
-    gameRef.read<DiceBloc>().sendDiceVal(val);
 
     return false;
   }
@@ -152,19 +148,8 @@ class Dice extends HudMarginComponent<FlameBlocGame>
   }
 
   @override
-  void onGameResize(Vector2 gameSize) {
-    
-    super.onGameResize(gameSize);
-  }
-
-  @override
   void onNewState(DiceState state) {
+    localVal = state.val;
     super.onNewState(state);
-
-    // Move back after click
-    if (inProcess) {
-      inProcess = false;
-    }
-    
   }
 }

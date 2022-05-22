@@ -25,10 +25,11 @@ class IntuitionState {
 
 
 class IntuitionBloc extends Bloc<IntuitionEvent,IntuitionState> {
-  final HttpLink link;
+  final Link link;
   final String clientId;
   final GraphQLClient client;
   final Duration pollInterval;
+  late final Stream subscription;
   late final Completer<bool> task;
 
   static final policies = Policies(
@@ -50,15 +51,35 @@ class IntuitionBloc extends Bloc<IntuitionEvent,IntuitionState> {
       emit(newstate);
     });
 
+    final subscriptionRequest = gql(
+      r'''
+        subscription {
+          updates {
+            id
+          }
+        }
+      ''',
+    );
+    subscription = client.subscribe(
+      SubscriptionOptions(
+        document: subscriptionRequest
+      ),
+    );
+    subscription.listen(onMessage);
+
     task = periodic(pollInterval, poll);
   }
 
+  void onMessage(event) {
+    poll(event);
+  }
+
   void poll(event) async {
-    const String intuitionQuery = r'''
+    final intuitionQuery = gql(r'''
       { intuition { val } }
-    ''';
+    ''');
     final QueryOptions options = QueryOptions(
-        document: gql(intuitionQuery)
+        document: intuitionQuery,
       );
 
       final QueryResult result = await client.query(options);
@@ -72,16 +93,16 @@ class IntuitionBloc extends Bloc<IntuitionEvent,IntuitionState> {
   }
 
   void sendIntuitionVal(bool val) async {
-    const String intuitionValMutation = r'''
+    final intuitionValMutation = gql(r'''
       mutation ($val: Boolean!){
         intuition {
           set(val: $val)
         }
       }
-    ''';
+    ''');
 
     final MutationOptions options = MutationOptions(
-      document: gql(intuitionValMutation),
+      document: intuitionValMutation,
       variables: <String, dynamic>{
         'val': val,
       },
