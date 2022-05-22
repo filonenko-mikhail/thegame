@@ -128,8 +128,8 @@ func serve(cmd *cobra.Command, args []string) error {
 	router.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", srv)
 
-	//fs := http.FileServer(http.Dir("myapp/build/web/"))
-	//router.Handle("/*", fs);
+	fs := http.FileServer(http.Dir("."))
+	router.Handle("/*", fs);
 
 	httpAddr, err := cmd.Flags().GetString("http-addr")
 	if err != nil {
