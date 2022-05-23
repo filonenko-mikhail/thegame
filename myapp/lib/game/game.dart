@@ -374,7 +374,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
         requestIdentifier: (BuildContext ctx, MyGame game) {
           return 
             Container(
-              constraints: BoxConstraints.loose(Size(game.size.x, 500)),
+              constraints: BoxConstraints.loose(Size(game.size.x, game.size.y)),
               padding: EdgeInsetsDirectional.all(40),  
               margin: EdgeInsetsDirectional.all(40),
               color: Colors.white,
@@ -420,7 +420,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
       chipIdentifier: (BuildContext ctx, MyGame game) {
           return 
             Container(
-              constraints: BoxConstraints.loose(Size(game.size.x, 500)),
+              constraints: BoxConstraints.loose(Size(game.size.x, game.size.y)),
               padding: EdgeInsetsDirectional.all(40),  
               margin: EdgeInsetsDirectional.all(40),
               color: Colors.white,
