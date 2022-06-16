@@ -38,7 +38,22 @@ func (r *cardMutationsResolver) Add(ctx context.Context, obj *model.CardMutation
 	}
 	r.Card.Store(payload.ID, item)
 
-	Update(r.ChatMessages, r.ChatObservers, r.mu, payload.ID)
+	event := &model.CardEvent{
+		Add: &model.CardAddEvent{
+			ID:       payload.ID,
+			Text:     payload.Text,
+			X:        payload.X,
+			Y:        payload.Y,
+			Color:    payload.Color,
+			Flipable: payload.Flipable,
+			Flip:     payload.Flip,
+			Fliptext: payload.Fliptext,
+			Prio:     payload.Prio,
+			Sizex:    payload.Sizex,
+			Sizey:    payload.Sizey,
+		},
+	}
+	CardEvent(r.CardObservers, event)
 
 	return item, nil
 }
@@ -57,7 +72,13 @@ func (r *cardMutationsResolver) Move(ctx context.Context, obj *model.CardMutatio
 		item.X = payload.X
 		item.Y = payload.Y
 
-		Update(r.ChatMessages, r.ChatObservers, r.mu, payload.ID)
+		CardEvent(r.CardObservers, &model.CardEvent{
+			Move: &model.CardMoveEvent{
+				ID: payload.ID,
+				X:  payload.X,
+				Y:  payload.Y,
+			},
+		})
 
 		return item, nil
 	}
@@ -75,7 +96,12 @@ func (r *cardMutationsResolver) Remove(ctx context.Context, obj *model.CardMutat
 		item := val.(*model.Card)
 		r.Card.Delete(payload.ID)
 
-		Update(r.ChatMessages, r.ChatObservers, r.mu, payload.ID)
+		event := &model.CardEvent{
+			Remove: &model.CardRemoveEvent{
+				ID: payload.ID,
+			},
+		}
+		CardEvent(r.CardObservers, event)
 
 		return item, nil
 	}
@@ -96,8 +122,6 @@ func (r *cardMutationsResolver) Flip(ctx context.Context, obj *model.CardMutatio
 		item := val.(*model.Card)
 		item.Flip = payload.Flip
 
-		Update(r.ChatMessages, r.ChatObservers, r.mu, payload.ID)
-
 		return item, nil
 	}
 	return nil, fmt.Errorf("no card for id: %s", payload.ID)
@@ -115,8 +139,6 @@ func (r *cardMutationsResolver) Prio(ctx context.Context, obj *model.CardMutatio
 
 		item := val.(*model.Card)
 		item.Prio = payload.Prio
-
-		Update(r.ChatMessages, r.ChatObservers, r.mu, payload.ID)
 
 		return item, nil
 	}
@@ -153,8 +175,6 @@ func (r *chipMutationsResolver) Add(ctx context.Context, obj *model.ChipMutation
 	}
 	r.Chip.Store(payload.ID, item)
 
-	Update(r.ChatMessages, r.ChatObservers, r.mu, payload.ID)
-
 	return item, nil
 }
 
@@ -172,8 +192,6 @@ func (r *chipMutationsResolver) Move(ctx context.Context, obj *model.ChipMutatio
 		item.X = payload.X
 		item.Y = payload.Y
 
-		Update(r.ChatMessages, r.ChatObservers, r.mu, payload.ID)
-
 		return item, nil
 	}
 	return nil, fmt.Errorf("no card for id: %s", payload.ID)
@@ -189,8 +207,6 @@ func (r *chipMutationsResolver) Remove(ctx context.Context, obj *model.ChipMutat
 
 		item := val.(*model.Chip)
 		r.Chip.Delete(payload.ID)
-
-		Update(r.ChatMessages, r.ChatObservers, r.mu, payload.ID)
 
 		return item, nil
 	}
@@ -212,7 +228,7 @@ func (r *chipQueriesResolver) List(ctx context.Context, obj *model.ChipQueries) 
 func (r *diceMutationsResolver) Set(ctx context.Context, obj *model.DiceMutations, val int) (int, error) {
 	r.Dice = val
 
-	Update(r.ChatMessages, r.ChatObservers, r.mu, "Dice")
+	UpdateDice(r.DiceObservers, val)
 
 	return r.Dice, nil
 }
@@ -223,8 +239,6 @@ func (r *diceQueriesResolver) Val(ctx context.Context, obj *model.DiceQueries) (
 
 func (r *intuitionMutationsResolver) Set(ctx context.Context, obj *model.IntuitionMutations, val bool) (bool, error) {
 	r.Intuition = val
-
-	Update(r.ChatMessages, r.ChatObservers, r.mu, "Intuition")
 
 	return r.Intuition, nil
 }
@@ -265,25 +279,31 @@ func (r *queryResolver) Intuition(ctx context.Context) (*model.IntuitionQueries,
 	return &model.IntuitionQueries{}, nil
 }
 
-func (r *subscriptionResolver) Updates(ctx context.Context) (<-chan []*model.Update, error) {
-	// Create an ID and channel for each active subscription. We will push changes into this channel.
-	// When a new subscription is created by the client, this resolver will fire first.
+func (r *subscriptionResolver) Dice(ctx context.Context) (<-chan int, error) {
 	id := uuid.NewString()
-	msgs := make(chan []*model.Update, 1)
+	msgs := make(chan int, 1)
 
-	// Start a goroutine to allow for cleaning up subscriptions that are disconnected.
-	// This go routine will only get past Done() when a client terminates the subscription. This allows us
-	// to only then remove the reference from the list of ChatObservers since it is no longer needed.
 	go func() {
 		<-ctx.Done()
-		r.mu.Lock()
-		delete(r.ChatObservers, id)
-		r.mu.Unlock()
+		r.DiceObservers.Delete(id)
 	}()
-	r.mu.Lock()
 	// Keep a reference of the channel so that we can push changes into it when new messages are posted.
-	r.ChatObservers[id] = msgs
-	r.mu.Unlock()
+	r.DiceObservers.Store(id, msgs)
+
+	return msgs, nil
+}
+
+func (r *subscriptionResolver) Card(ctx context.Context) (<-chan *model.CardEvent, error) {
+	id := uuid.NewString()
+	msgs := make(chan *model.CardEvent, 1)
+
+	go func() {
+		<-ctx.Done()
+		r.DiceObservers.Delete(id)
+	}()
+	// Keep a reference of the channel so that we can push changes into it when new messages are posted.
+	r.CardObservers.Store(id, msgs)
+
 	return msgs, nil
 }
 

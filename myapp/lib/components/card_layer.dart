@@ -12,7 +12,7 @@ import 'card.dart';
 var logger = Logger();
 
 class CardLayer extends PositionComponent
-  with BlocComponent<CardBloc, CardState>,
+  with FlameBlocListenable<CardBloc, CardState>,
   HasGameRef<MyGame> {
 
   Map<String, Card> cards = {};

@@ -61,7 +61,7 @@ class ChipBloc extends Bloc<ChipEvent,ChipState> {
   late final Stream subscription;
 
   static final policies = Policies(
-    fetch: FetchPolicy.networkOnly,
+    fetch: FetchPolicy.noCache,
   );
 
   ChipBloc(this.clientId, this.link, this.pollInterval, this.sendInterval)
@@ -71,6 +71,7 @@ class ChipBloc extends Bloc<ChipEvent,ChipState> {
                               watchQuery: policies,
                               query: policies,
                               mutate: policies,
+                              subscribe: policies,
                             ),),
       lastSend = DateTime.now().millisecondsSinceEpoch,
       lastPoll = DateTime.now().millisecondsSinceEpoch,
@@ -99,12 +100,12 @@ class ChipBloc extends Bloc<ChipEvent,ChipState> {
     );
     subscription.listen(onMessage);
 
-    task = periodic(pollInterval, poll);
-    task2 = periodic(sendInterval, send);
+    //task = periodic(pollInterval, poll);
+    //task2 = periodic(sendInterval, send);
   }
 
   void onMessage(event) {
-    poll(event);
+    //poll(event);
   }
 
   // timer

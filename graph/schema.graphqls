@@ -131,6 +131,37 @@ type Update {
   id: String!
 }
 
+type CardAddEvent {
+  id: ID!
+  text: String!
+  x: Float!
+  y: Float!
+  color: Int!
+  flipable: Boolean!
+  flip: Boolean!
+  fliptext: String!
+  prio: Int!
+  sizex: Float!
+  sizey: Float!
+}
+
+type CardRemoveEvent {
+  id: ID!
+}
+
+type CardMoveEvent {
+  id: ID!
+  x: Float!
+  y: Float!
+}
+
+type CardEvent {
+  add: CardAddEvent
+  remove: CardRemoveEvent
+  move: CardMoveEvent
+}
+
 type Subscription {
-  updates: [Update!]
+  dice: Int!
+  card: CardEvent!
 }

@@ -75,9 +75,8 @@ func serve(cmd *cobra.Command, args []string) error {
 		Dice: 1,
 		Card: sync.Map{},
 		Intuition: true,
-
-		ChatMessages: []*model.Update{},
-    	ChatObservers: map[string]chan []*model.Update{},
+    	DiceObservers: sync.Map{},
+		CardObservers: sync.Map{},
 	}
 	srv := handler.New(
 		generated.NewExecutableSchema(generated.

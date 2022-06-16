@@ -33,7 +33,7 @@ class DiceBloc extends Bloc<DiceEvent,DiceState> {
   late final Stream subscription;
 
   static final policies = Policies(
-    fetch: FetchPolicy.networkOnly,
+    fetch: FetchPolicy.noCache,
   );
 
   DiceBloc(this.clientId, this.link, this.pollInterval)
@@ -43,6 +43,7 @@ class DiceBloc extends Bloc<DiceEvent,DiceState> {
                               watchQuery: policies,
                               query: policies,
                               mutate: policies,
+                              subscribe: policies,
                             ),),
       super(const DiceState(1)) {
 
@@ -67,11 +68,11 @@ class DiceBloc extends Bloc<DiceEvent,DiceState> {
     );
     subscription.listen(onMessage);
 
-    task = periodic(pollInterval, poll);
+    //task = periodic(pollInterval, poll);
   }
 
   void onMessage(event) {
-    poll(event);
+    //poll(event);
   }
 
   void poll(event) async {

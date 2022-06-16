@@ -1,4 +1,4 @@
-import 'dart:math';
+//import 'dart:math';
 
 import 'package:logger/logger.dart';
 
@@ -8,7 +8,7 @@ import 'package:flame/components.dart';
 import 'package:flame/input.dart';
 import 'package:flame/effects.dart';
 import 'package:flame/components.dart' as components;
-import 'close_button.dart' as close_button;
+//import 'close_button.dart' as close_button;
 
 import 'package:flame_bloc/flame_bloc.dart';
 
@@ -75,27 +75,27 @@ class Chip extends PositionComponent
   Vector2 _startDrag = Vector2.zero();
 
   @override
-  bool onDragStart(int pointerId, DragStartInfo info) {
+  bool onDragStart(DragStartInfo info) {
     _draganchor = info.eventPosition.game - position;
     _startDrag = info.eventPosition.game;
     return false;
   }
 
   @override
-  bool onDragUpdate(int pointerId, DragUpdateInfo info) {
+  bool onDragUpdate(DragUpdateInfo info) {
     position = info.eventPosition.game - _draganchor;
     return false;
   }
 
   @override
-  bool onDragEnd(int pointerId, DragEndInfo info) {
+  bool onDragEnd(DragEndInfo info) {
     _draganchor = Vector2.zero();
     gameRef.read<ChipBloc>().moveChip(model.id, position.x, position.y);
     return false;
   }
 
   @override
-  bool onDragCancel(int pointerId) {
+  bool onDragCancel() {
     position = _startDrag;
     return false;
   }

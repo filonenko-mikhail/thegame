@@ -18,7 +18,7 @@ class Intuition extends HudMarginComponent<FlameBlocGame>
   {
 
   static final Paint circlePaint = Paint()
-    ..color=Colors.black87
+    ..color=Colors.black
     ..style=PaintingStyle.stroke
     ..strokeWidth=3;
 
@@ -78,7 +78,6 @@ class Intuition extends HudMarginComponent<FlameBlocGame>
       localValue = nextRandom(1, 7) % 2 == 0;
 
       if (buttonAngle >= 2*pi) {
-        
         gameRef.read<IntuitionBloc>().sendIntuitionVal(localValue);
       }
     }

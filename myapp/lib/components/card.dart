@@ -50,6 +50,7 @@ class Card extends PositionComponent
   final flipPaint = Paint()
     ..color = Colors.black45
     ..style = PaintingStyle.fill;
+  Paint backPaint = Paint();
 
   Card(this.model,
   {
@@ -131,10 +132,12 @@ class Card extends PositionComponent
   void render(Canvas canvas) {
     super.render(canvas);
     
+    canvas.save();
     Color backgroundColor = Color(model.color);
     canvas.drawRect(Rect.fromPoints(Offset.zero, size.toOffset()), 
-      Paint()..color = backgroundColor);
-
+      backPaint..color = backgroundColor);
+    canvas.restore();
+    
     TextSpan span = TextSpan(text: text);
     TextPainter textPainter = TextPainter(text: span,
                                           textWidthBasis: TextWidthBasis.longestLine,
@@ -202,27 +205,27 @@ class Card extends PositionComponent
   Vector2 _startDrag = Vector2.zero();
 
   @override
-  bool onDragStart(int pointerId, DragStartInfo info) {
+  bool onDragStart(DragStartInfo info) {
     _draganchor = info.eventPosition.game - position;
     _startDrag = info.eventPosition.game;
     return false;
   }
 
   @override
-  bool onDragUpdate(int pointerId, DragUpdateInfo info) {
+  bool onDragUpdate(DragUpdateInfo info) {
     position = info.eventPosition.game - _draganchor;
     return false;
   }
 
   @override
-  bool onDragEnd(int pointerId, DragEndInfo info) {
+  bool onDragEnd(DragEndInfo info) {
     _draganchor = Vector2.zero();
     gameRef.read<CardBloc>().moveCard(model.id, position.x, position.y);
     return false;
   }
 
   @override
-  bool onDragCancel(int pointerId) {
+  bool onDragCancel() {
     position = _startDrag;
     return false;
   }

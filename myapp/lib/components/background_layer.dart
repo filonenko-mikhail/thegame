@@ -4,6 +4,7 @@ import 'package:logger/logger.dart';
 import 'package:flutter/material.dart';
 
 import 'package:flame/components.dart';
+import 'package:flame/layers.dart';
 
 import '../game/game.dart';
 
@@ -46,25 +47,25 @@ class BackgroundLayer extends PositionComponent
 
   @override
   void render(Canvas canvas) {
-    for (int i=1; i < size.y/dashSize; ++i) {
-      if (i%2 == 1) {
-        canvas.drawLine(Offset(210, (i*dashSize).toDouble()), 
-          Offset(210, ((i+1)*dashSize).toDouble()), dotPaint);
-        canvas.drawLine(Offset(620, (i*dashSize).toDouble()), 
-          Offset(620, ((i+1)*dashSize).toDouble()), dotPaint);
-      }
-    };
+    // for (int i=1; i < size.y/dashSize; ++i) {
+    //   if (i%2 == 1) {
+    //     canvas.drawLine(Offset(210, (i*dashSize).toDouble()), 
+    //       Offset(210, ((i+1)*dashSize).toDouble()), dotPaint);
+    //     canvas.drawLine(Offset(620, (i*dashSize).toDouble()), 
+    //       Offset(620, ((i+1)*dashSize).toDouble()), dotPaint);
+    //   }
+    // };
 
     canvas.save();
     canvas.translate(650, 120);
     if (imageLoaded) {
-      canvas.drawImage(gameRef.images.fromCache("game.png"), Offset.zero, Paint());
+      //canvas.drawImage(gameRef.images.fromCache("game.png"), Offset.zero, Paint());
     }
     canvas.restore();
     canvas.save();
     canvas.translate(580+800, 350);
     if (heavenLoaded) {
-      canvas.drawImage(gameRef.images.fromCache("heaven.png"), Offset.zero, Paint());
+      //canvas.drawImage(gameRef.images.fromCache("heaven.png"), Offset.zero, Paint());
     }
     canvas.restore();
   }
@@ -74,4 +75,11 @@ class BackgroundLayer extends PositionComponent
     super.onGameResize(gameSize);
     size = gameSize;
   }
+
+  @override
+  void onRemove() {
+    gameRef.images.clear('game.png');
+    gameRef.images.clear('heaven.png');
+    super.onRemove();
+  } 
 }

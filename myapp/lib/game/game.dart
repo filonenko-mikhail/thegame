@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math';
 import 'dart:ui';
 
@@ -29,10 +30,19 @@ final logger = Logger();
 const requestIdentifier = 'RequestEdit';
 const chipIdentifier = 'ChipEdit';
 
+class Stub extends Component {
+  @override
+  void update(double dt) {
+    Future.delayed(Duration(seconds: 1));
+    
+    super.update(dt);
+  }
+}
+
 class MyGame extends FlameBlocGame
   with  KeyboardEvents,
         ScrollDetector,
-        MouseMovementDetector,
+        //MouseMovementDetector,
         HasTappables,
         HasDraggables,
         HasHoverables {
@@ -88,7 +98,6 @@ class MyGame extends FlameBlocGame
     margin: const EdgeInsets.only(top: 1, left: 800),
     size: Vector2(100, 40));
 
-  
   final PushButton painButton = PushButton("Боль",
     margin: const EdgeInsets.only(top: 1, left: 1000),
     size: Vector2(100, 40));
@@ -127,13 +136,13 @@ class MyGame extends FlameBlocGame
       worldBounds: Rect.fromLTRB(0, 0, 2000, 2000));
 
     backgroundLayer.size = size;
-    add(backgroundLayer);
+    //add(backgroundLayer);
 
     cardLayer.size = size;
-    add(cardLayer);
+    //add(cardLayer);
 
     chipLayer.size = size;
-    add(chipLayer);
+    //add(chipLayer);
 
     // HUD
     newRequest.callback = () {
@@ -296,6 +305,8 @@ class MyGame extends FlameBlocGame
 
     add(dice);
     add(intuition);
+
+    add(Stub());
   }
 
   @override
@@ -370,91 +381,91 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
   _MyStatefulWidgetState() {
     gameWidget = GameWidget<MyGame>(
       game: MyGame(),
-      overlayBuilderMap: {
-        requestIdentifier: (BuildContext ctx, MyGame game) {
-          return 
-            Container(
-              constraints: BoxConstraints.loose(Size(game.size.x, game.size.y)),
-              padding: EdgeInsetsDirectional.all(40),  
-              margin: EdgeInsetsDirectional.all(40),
-              color: Colors.white,
-              child: Column(
-              children: [
-                TextField(
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    hintText: 'Введите ваш запрос',
-                    labelText: 'Запрос',
-                  ),
-                  controller: textController,
-                ),
-                ColorPicker(
-                  // Use the screenPickerColor as start color.
-                  color: newColor,
+      // overlayBuilderMap: {
+      //   requestIdentifier: (BuildContext ctx, MyGame game) {
+      //     return 
+      //       Container(
+      //         constraints: BoxConstraints.loose(Size(game.size.x, game.size.y)),
+      //         padding: EdgeInsetsDirectional.all(40),  
+      //         margin: EdgeInsetsDirectional.all(40),
+      //         color: Colors.white,
+      //         child: Column(
+      //         children: [
+      //           TextField(
+      //             decoration: const InputDecoration(
+      //               border: OutlineInputBorder(),
+      //               hintText: 'Введите ваш запрос',
+      //               labelText: 'Запрос',
+      //             ),
+      //             controller: textController,
+      //           ),
+      //           ColorPicker(
+      //             // Use the screenPickerColor as start color.
+      //             color: newColor,
                   
-                  pickersEnabled: {
-                    ColorPickerType.accent: false,
-                  },
-                  enableShadesSelection: false,
-                  // Update the screenPickerColor using the callback.
-                  onColorChanged: onColorChanged,
-                  width: 44,
-                  height: 44,
-                  borderRadius: 22,
-                ),
-                TextButton(
-                  onPressed: () {
-                    onOk(game);
-                  }, 
-                  child: const Text("Создать"),
-                ),
-                TextButton(
-                  onPressed: () {
-                    onCancel(game);
-                  },
-                  child: const Text("Отмена"),
-                )
-              ]
-            ));
-      },
-      chipIdentifier: (BuildContext ctx, MyGame game) {
-          return 
-            Container(
-              constraints: BoxConstraints.loose(Size(game.size.x, game.size.y)),
-              padding: EdgeInsetsDirectional.all(40),  
-              margin: EdgeInsetsDirectional.all(40),
-              color: Colors.white,
-              child: Column(
-              children: [
-                ColorPicker(
-                  // Use the screenPickerColor as start color.
-                  color: newColor,
-                  pickersEnabled: {
-                    ColorPickerType.accent: false,
-                  },
-                  enableShadesSelection: false,
-                  // Update the screenPickerColor using the callback.
-                  onColorChanged: onChipColorChanged,
-                  width: 44,
-                  height: 44,
-                  borderRadius: 22,
-                ),
-                TextButton(
-                  onPressed: () {
-                    onChipOk(game);
-                  }, 
-                  child: const Text("Создать"),
-                ),
-                TextButton(
-                  onPressed: () {
-                    onChipCancel(game);
-                  },
-                  child: const Text("Отмена"),
-                )
-              ]
-            ));
-      }
-    },
+      //             pickersEnabled: {
+      //               ColorPickerType.accent: false,
+      //             },
+      //             enableShadesSelection: false,
+      //             // Update the screenPickerColor using the callback.
+      //             onColorChanged: onColorChanged,
+      //             width: 44,
+      //             height: 44,
+      //             borderRadius: 22,
+      //           ),
+      //           TextButton(
+      //             onPressed: () {
+      //               onOk(game);
+      //             }, 
+      //             child: const Text("Создать"),
+      //           ),
+      //           TextButton(
+      //             onPressed: () {
+      //               onCancel(game);
+      //             },
+      //             child: const Text("Отмена"),
+      //           )
+      //         ]
+      //       ));
+      // },
+      // chipIdentifier: (BuildContext ctx, MyGame game) {
+      //     return 
+      //       Container(
+      //         constraints: BoxConstraints.loose(Size(game.size.x, game.size.y)),
+      //         padding: EdgeInsetsDirectional.all(40),  
+      //         margin: EdgeInsetsDirectional.all(40),
+      //         color: Colors.white,
+      //         child: Column(
+      //         children: [
+      //           ColorPicker(
+      //             // Use the screenPickerColor as start color.
+      //             color: newColor,
+      //             pickersEnabled: {
+      //               ColorPickerType.accent: false,
+      //             },
+      //             enableShadesSelection: false,
+      //             // Update the screenPickerColor using the callback.
+      //             onColorChanged: onChipColorChanged,
+      //             width: 44,
+      //             height: 44,
+      //             borderRadius: 22,
+      //           ),
+      //           TextButton(
+      //             onPressed: () {
+      //               onChipOk(game);
+      //             }, 
+      //             child: const Text("Создать"),
+      //           ),
+      //           TextButton(
+      //             onPressed: () {
+      //               onChipCancel(game);
+      //             },
+      //             child: const Text("Отмена"),
+      //           )
+      //         ]
+      //       ));
+      //  }
+    //},
   );
   }
 
@@ -496,6 +507,7 @@ class _MyStatefulWidgetState extends State<MyStatefulWidget> {
 
   void onChipCancel(FlameBlocGame game) {
     game.overlays.remove(chipIdentifier);
+    game.renderBox.gameLoop!.stop();
   }
 
   @override

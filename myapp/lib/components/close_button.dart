@@ -17,11 +17,11 @@ class CloseButton extends PositionComponent
           ..strokeWidth = 3;
   static final circlePaint = Paint()
           ..style = PaintingStyle.fill
-          ..color = const Color(0x77AAAAAA);
+          ..color = const Color(0xFFAAAAAA);
   static final fillPaint = Paint()..style = PaintingStyle.fill
           ..color = const Color(0xFF333333);
   static final strokePaint = Paint()..style = PaintingStyle.stroke
-          ..color = const Color(0x77000000);
+          ..color = const Color(0xFF000000);
 
   CloseButton({Vector2? position})
       :closeAngle = 0, velocity = 0,

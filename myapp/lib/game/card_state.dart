@@ -74,7 +74,7 @@ class CardBloc extends Bloc<CardEvent,CardState> {
   Map<String, Vector2> toSendXY;
 
   static final policies = Policies(
-    fetch: FetchPolicy.networkOnly,
+    fetch: FetchPolicy.noCache,
   );
 
   CardBloc(this.clientId, this.link, this.pollInterval, this.sendInterval)
@@ -84,12 +84,13 @@ class CardBloc extends Bloc<CardEvent,CardState> {
                               watchQuery: policies,
                               query: policies,
                               mutate: policies,
+                              subscribe: policies,
+                              watchMutation: policies,
                             ),),
       lastSend = DateTime.now().millisecondsSinceEpoch,
       lastPoll = DateTime.now().millisecondsSinceEpoch,
       toSendXY = {},
       super(CardState({})) {
-
 
     on<CardList>((event, emit) {
       CardState newstate = CardState(event.card);
@@ -112,8 +113,10 @@ class CardBloc extends Bloc<CardEvent,CardState> {
     );
     subscription.listen(onMessage);
 
-    task = periodic(pollInterval, poll);
-    task2 = periodic(sendInterval, send);
+    //task = periodic(pollInterval, poll);
+    //task2 = periodic(sendInterval, send);
+
+    poll(null);
   }
 
   void onMessage(event) {

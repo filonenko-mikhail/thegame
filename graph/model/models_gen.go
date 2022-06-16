@@ -16,6 +16,20 @@ type Card struct {
 	Sizey    float64 `json:"sizey"`
 }
 
+type CardAddEvent struct {
+	ID       string  `json:"id"`
+	Text     string  `json:"text"`
+	X        float64 `json:"x"`
+	Y        float64 `json:"y"`
+	Color    int     `json:"color"`
+	Flipable bool    `json:"flipable"`
+	Flip     bool    `json:"flip"`
+	Fliptext string  `json:"fliptext"`
+	Prio     int     `json:"prio"`
+	Sizex    float64 `json:"sizex"`
+	Sizey    float64 `json:"sizey"`
+}
+
 type CardAddPayload struct {
 	ID       string  `json:"id"`
 	Text     string  `json:"text"`
@@ -30,9 +44,21 @@ type CardAddPayload struct {
 	Sizey    float64 `json:"sizey"`
 }
 
+type CardEvent struct {
+	Add    *CardAddEvent    `json:"add"`
+	Remove *CardRemoveEvent `json:"remove"`
+	Move   *CardMoveEvent   `json:"move"`
+}
+
 type CardFlipPayload struct {
 	ID   string `json:"id"`
 	Flip bool   `json:"flip"`
+}
+
+type CardMoveEvent struct {
+	ID string  `json:"id"`
+	X  float64 `json:"x"`
+	Y  float64 `json:"y"`
 }
 
 type CardMovePayload struct {
@@ -56,6 +82,10 @@ type CardPrioPayload struct {
 
 type CardQueries struct {
 	List []*Card `json:"list"`
+}
+
+type CardRemoveEvent struct {
+	ID string `json:"id"`
 }
 
 type CardRemovePayload struct {

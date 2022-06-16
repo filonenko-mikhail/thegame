@@ -33,7 +33,7 @@ class IntuitionBloc extends Bloc<IntuitionEvent,IntuitionState> {
   late final Completer<bool> task;
 
   static final policies = Policies(
-    fetch: FetchPolicy.networkOnly,
+    fetch: FetchPolicy.noCache,
   );
 
   IntuitionBloc(this.clientId, this.link, this.pollInterval)
@@ -43,6 +43,7 @@ class IntuitionBloc extends Bloc<IntuitionEvent,IntuitionState> {
                               watchQuery: policies,
                               query: policies,
                               mutate: policies,
+                              subscribe: policies,
                             ),),
       super(const IntuitionState(true)) {
 
@@ -67,11 +68,11 @@ class IntuitionBloc extends Bloc<IntuitionEvent,IntuitionState> {
     );
     subscription.listen(onMessage);
 
-    task = periodic(pollInterval, poll);
+    //task = periodic(pollInterval, poll);
   }
 
   void onMessage(event) {
-    poll(event);
+    //poll(event);
   }
 
   void poll(event) async {
