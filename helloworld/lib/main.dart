@@ -3,6 +3,7 @@ import 'package:logger/logger.dart';
 import 'package:flutter/material.dart';
 
 import 'widget/dice.dart';
+import 'widget/intuition.dart';
 import 'widget/field.dart';
 import 'widget/menu.dart';
 
@@ -10,8 +11,6 @@ var logger = Logger();
 
 
 void main() {
-
-
   runApp(const MyApp());
 }
 
@@ -48,11 +47,15 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: const SingleChildScrollView(
-        child: SizedBox(
-          height: 2000,
-          child: SafeArea(
-            bottom: false,
-            child: FieldWidget()))),
+        scrollDirection: Axis.vertical,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(
+            height: 2000,
+            width: 2000,
+            child: SafeArea(
+              bottom: false,
+              child: FieldWidget())))),
       drawer: MenuWidget(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: Padding(
@@ -61,6 +64,7 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             DiceWidget(),
             Spacer(),
+            IntuitionWidget(),
           ],
         ),
       ),

@@ -21,4 +21,6 @@ type Resolver struct{
 	// All active subscriptions
 	DiceObservers sync.Map
 	CardObservers sync.Map
+	ChipObservers sync.Map
+	IntuitionObservers sync.Map
 }

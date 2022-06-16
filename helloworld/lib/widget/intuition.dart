@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'dart:async';
 import 'dart:math';
 
@@ -6,14 +5,13 @@ import 'package:logger/logger.dart';
 
 import 'package:flutter/material.dart';
 
-import 'package:flutter/material.dart';
 import 'package:graphql/client.dart';
 
 import '../model/utils.dart';
 
 var logger = Logger();
 
-class DicePainter extends CustomPainter {
+class IntuitionPainter extends CustomPainter {
 
   static final Paint circlePaint = Paint()
     ..color=Colors.black87
@@ -29,30 +27,27 @@ class DicePainter extends CustomPainter {
     ..style=PaintingStyle.fill;
 
   static const textStyle = TextStyle(
-    color: Colors.black,
+    color: Colors.green,
     fontSize: 24,
   );
-  static const selectedTextStyle = TextStyle(
+  static const redTextStyle = TextStyle(
     color: Colors.red,
     fontSize: 24,
   );
 
   double buttonAngle = 2*pi;
   bool isHover = false;
-  int value = 1;
+  bool localValue = true;
 
-  DicePainter(this.value, this.buttonAngle, this.isHover);
+  IntuitionPainter(this.localValue, this.buttonAngle, this.isHover);
 
   @override
   void paint(Canvas canvas, Size size) {
     // center button paint
     double radius = min(size.width/2, size.height/2) - 3;
-    if (!isHover) { // !is hovered
-      canvas.drawCircle(size.center(Offset.zero), radius/2, buttonPaint);
-    } else {
-      canvas.drawCircle(size.center(Offset.zero), radius/2, hoverButtonPaint);
-    }
     
+   
+
     // outter paints
     if (buttonAngle < 2*pi) {
       canvas.drawArc(Rect.fromCircle(center: size.center(Offset.zero), radius: radius),0, buttonAngle, true, circlePaint);
@@ -61,19 +56,11 @@ class DicePainter extends CustomPainter {
     }
 
     canvas.save();
-    canvas.translate(size.width/2, size.height/2);
-    
-    for (var i=0; i<6; ++i){
-      canvas.save();
-      canvas.rotate(i*(2*pi/6));
-      canvas.translate(0, -radius);
-
+    if (localValue) {
+      canvas.translate(size.width/2, size.height/2);
       TextStyle style = textStyle;
-      if (value == i + 1) {
-        style = selectedTextStyle;
-      }
       final textSpan = TextSpan(
-        text: (i + 1).toString(),
+        text: "Молния",
         style: style,
       );
       final textPainter = TextPainter(
@@ -82,36 +69,50 @@ class DicePainter extends CustomPainter {
         textDirection: TextDirection.ltr,
       );
       textPainter.layout();
-
-      canvas.translate(-textPainter.width/2, 0);
+      canvas.translate(-textPainter.width/2, -textPainter.height/2);
       textPainter.paint(canvas, Offset.zero);
-      canvas.restore();
+    } else {
+      canvas.translate(size.width/2, size.height/2);
+      TextStyle style = redTextStyle;
+      final textSpan = TextSpan(
+        text: "Слезинка",
+        style: style,
+      );
+      final textPainter = TextPainter(
+        text: textSpan,
+        textAlign: TextAlign.center,
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+      canvas.translate(-textPainter.width/2, -textPainter.height/2);
+      textPainter.paint(canvas, Offset.zero);
     }
     canvas.restore();
+
   }
 
   @override
-  bool shouldRepaint(DicePainter oldDelegate) {
-    return oldDelegate.value != value 
+  bool shouldRepaint(IntuitionPainter oldDelegate) {
+    return oldDelegate.localValue != localValue 
       || oldDelegate.isHover != isHover
       || oldDelegate.buttonAngle != buttonAngle;
   }
 }
 
-class DiceWidget extends StatefulWidget {
-  const DiceWidget({Key? key}) : super(key: key);
+class IntuitionWidget extends StatefulWidget {
+  const IntuitionWidget({Key? key}) : super(key: key);
 
   @override
-  DiceState createState() => DiceState();
+  IntuitionState createState() => IntuitionState();
 }
 
-class DiceState extends State<DiceWidget> {
+class IntuitionState extends State<IntuitionWidget> {
   
   static final random = Random.secure();
 
   double buttonAngle = 2*pi;
   bool isHover = false;
-  int value = 1;
+  bool value = true;
 
   int nextRandom(int min, int max) {
     return min + random.nextInt(max - min);
@@ -145,12 +146,12 @@ class DiceState extends State<DiceWidget> {
               final int randVal = nextRandom(1, 7);
               counter--;
               setState(() {
-                value = randVal;
+                value = randVal % 2 == 0;
                 buttonAngle = (whole - counter)*(2*pi/whole);
               });
 
               if (counter == 0) {
-                sendDiceVal(randVal);
+                sendIntuitionVal(randVal % 2 == 0);
                 
                 timer.cancel();
               }
@@ -158,7 +159,7 @@ class DiceState extends State<DiceWidget> {
           },
             child: CustomPaint(
               size: const Size(120, 120),
-              painter: DicePainter(value, buttonAngle, isHover),
+              painter: IntuitionPainter(value, buttonAngle, isHover),
             )
         )
     );
@@ -175,7 +176,7 @@ class DiceState extends State<DiceWidget> {
     fetch: FetchPolicy.noCache,
   );
 
-  DiceState()
+  IntuitionState()
     : client=GraphQLClient(cache: GraphQLCache(), 
                            link: Connection.instance.link,
                            defaultPolicies: DefaultPolicies(
@@ -184,8 +185,7 @@ class DiceState extends State<DiceWidget> {
                               mutate: policies,
                               subscribe: policies,
                             ),),
-      pollInterval = Duration(seconds: 30),
-      value = 1,
+      pollInterval = const Duration(seconds: 30),
       super();
 
   @override
@@ -193,7 +193,7 @@ class DiceState extends State<DiceWidget> {
     final subscriptionRequest = gql(
       r'''
         subscription {
-          dice
+          intuition
         }
       ''',
     );
@@ -210,18 +210,18 @@ class DiceState extends State<DiceWidget> {
   }
 
   void onMessage(event) {
-    final diceVal = event.data['dice'];
+    final val = event.data['intuition'];
     setState(() {
-      value = diceVal;      
+      value = val;      
     });
   }
 
   void poll(event) async {
-    final diceQuery = gql(r'''
-      { dice { val } }
+    final intuitionQuery = gql(r'''
+      { intuition { val } }
     ''');
     final QueryOptions options = QueryOptions(
-        document: diceQuery
+        document: intuitionQuery
       );
 
     final QueryResult result = await client.query(options);
@@ -232,21 +232,21 @@ class DiceState extends State<DiceWidget> {
     }
 
     setState(() {
-      value = result.data?['dice']['val'];
+      value = result.data?['intuition']['val'];
     });
   }
 
-  void sendDiceVal(int val) async {
-    final diceValMutation = gql(r'''
-      mutation ($val: Int!){
-        dice {
+  void sendIntuitionVal(bool val) async {
+    final intuitionValMutation = gql(r'''
+      mutation ($val: Boolean!){
+        intuition {
           set(val: $val)
         }
       }
     ''');
 
     final MutationOptions options = MutationOptions(
-      document: diceValMutation,
+      document: intuitionValMutation,
       variables: <String, dynamic>{
         'val': val,
       },
@@ -264,7 +264,7 @@ class DiceState extends State<DiceWidget> {
   void dispose() {
     task.complete(true);
     stream.cancel();
-    
+
     super.dispose();
   }
 }

@@ -40,34 +40,29 @@ class CardWidget extends StatelessWidget {
 
     Widget textWidget = Text(flip?fliptext:text);
     
-    Widget flipButton = InkWell(
-      onLongPress: () {
-        triggerFlip(key);
-      },
-      radius: 12.0,
-      child: Ink(
-        padding: EdgeInsets.zero,
-        child: const Icon(Icons.flip, size: 12.0),
-      ),
-      );
+    
     Widget upButton = IconButton(
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(),
       icon: const Icon(Icons.move_up, size: 12.0),
       splashRadius: 12.0,
+      iconSize: 12.0,
       onPressed: () {
         setPrio(key, prio + 1);
       });
     Widget downButton = IconButton(
-      padding: EdgeInsets.zero,
+      padding: EdgeInsets.all(2),
       constraints: const BoxConstraints(),
       icon: const Icon(Icons.move_down, size: 12.0),
       splashRadius: 12.0,
+      iconSize: 12.0,
       onPressed: () {
         setPrio(key, prio - 1);
       });
     
     final Widget removeButton = InkWell(
+      radius: 12.0,
+      borderRadius: BorderRadius.zero,
       child: Ink(
         padding: EdgeInsets.zero,
         child: const Icon(Icons.close, size: 12.0),
@@ -75,6 +70,17 @@ class CardWidget extends StatelessWidget {
       onLongPress: () {
         remove(key);
       });
+    Widget flipButton = InkWell(
+      radius: 12.0,
+      borderRadius: BorderRadius.zero,
+      onLongPress: () {
+        triggerFlip(key, !flip);
+      },
+      child: Ink(
+        padding: EdgeInsets.zero,
+        child: const Icon(Icons.flip, size: 12.0),
+      ),
+      );
 
     List<Widget> controlPanel = [
       removeButton,
@@ -105,7 +111,7 @@ class CardWidget extends StatelessWidget {
           childWhenDragging: Container(),
           onDragEnd: (info) {
             RenderBox renderObject = context.findRenderObject()! as RenderBox;
-            move(key, renderObject.globalToLocal(info.offset));
+            move(key, offset + renderObject.globalToLocal(info.offset));
           },
           child: content,
       ));

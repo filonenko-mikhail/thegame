@@ -48,6 +48,13 @@ type CardEvent struct {
 	Add    *CardAddEvent    `json:"add"`
 	Remove *CardRemoveEvent `json:"remove"`
 	Move   *CardMoveEvent   `json:"move"`
+	Prio   *CardPrioEvent   `json:"prio"`
+	Flip   *CardFlipEvent   `json:"flip"`
+}
+
+type CardFlipEvent struct {
+	ID   string `json:"id"`
+	Flip bool   `json:"flip"`
 }
 
 type CardFlipPayload struct {
@@ -75,6 +82,11 @@ type CardMutations struct {
 	Prio   *Card `json:"prio"`
 }
 
+type CardPrioEvent struct {
+	ID   string `json:"id"`
+	Prio int    `json:"prio"`
+}
+
 type CardPrioPayload struct {
 	ID   string `json:"id"`
 	Prio int    `json:"prio"`
@@ -99,11 +111,30 @@ type Chip struct {
 	Y     float64 `json:"y"`
 }
 
+type ChipAddEvent struct {
+	ID    string  `json:"id"`
+	Color int     `json:"color"`
+	X     float64 `json:"x"`
+	Y     float64 `json:"y"`
+}
+
 type ChipAddPayload struct {
 	ID    string  `json:"id"`
 	Color int     `json:"color"`
 	X     float64 `json:"x"`
 	Y     float64 `json:"y"`
+}
+
+type ChipEvent struct {
+	Add    *ChipAddEvent    `json:"add"`
+	Remove *ChipRemoveEvent `json:"remove"`
+	Move   *ChipMoveEvent   `json:"move"`
+}
+
+type ChipMoveEvent struct {
+	ID string  `json:"id"`
+	X  float64 `json:"x"`
+	Y  float64 `json:"y"`
 }
 
 type ChipMovePayload struct {
@@ -122,6 +153,10 @@ type ChipQueries struct {
 	List []*Chip `json:"list"`
 }
 
+type ChipRemoveEvent struct {
+	ID string `json:"id"`
+}
+
 type DiceMutations struct {
 	Set int `json:"set"`
 }
@@ -136,8 +171,4 @@ type IntuitionMutations struct {
 
 type IntuitionQueries struct {
 	Val bool `json:"val"`
-}
-
-type Update struct {
-	ID string `json:"id"`
 }

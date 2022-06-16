@@ -127,10 +127,6 @@ type Mutation {
   intuition: IntuitionMutations!
 }
 
-type Update {
-  id: String!
-}
-
 type CardAddEvent {
   id: ID!
   text: String!
@@ -155,13 +151,50 @@ type CardMoveEvent {
   y: Float!
 }
 
+type CardPrioEvent {
+  id: ID!
+  prio: Int!
+}
+
+type CardFlipEvent {
+  id: ID!
+  flip: Boolean!
+}
+
 type CardEvent {
   add: CardAddEvent
   remove: CardRemoveEvent
   move: CardMoveEvent
+  prio: CardPrioEvent
+  flip: CardFlipEvent
+}
+
+type ChipAddEvent {
+  id: ID!
+  color: Int!
+  x: Float!
+  y: Float!
+}
+
+type ChipRemoveEvent {
+  id: ID!
+}
+
+type ChipMoveEvent {
+  id: ID!
+  x: Float!
+  y: Float!
+}
+
+type ChipEvent {
+  add: ChipAddEvent
+  remove: ChipRemoveEvent
+  move: ChipMoveEvent
 }
 
 type Subscription {
   dice: Int!
   card: CardEvent!
+  chip: ChipEvent!
+  intuition: Boolean!
 }

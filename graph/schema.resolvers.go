@@ -122,6 +122,15 @@ func (r *cardMutationsResolver) Flip(ctx context.Context, obj *model.CardMutatio
 		item := val.(*model.Card)
 		item.Flip = payload.Flip
 
+		CardEvent(r.CardObservers,
+			&model.CardEvent{
+				Flip: &model.CardFlipEvent{
+					ID:   payload.ID,
+					Flip: payload.Flip,
+				},
+			},
+		)
+
 		return item, nil
 	}
 	return nil, fmt.Errorf("no card for id: %s", payload.ID)
@@ -140,6 +149,13 @@ func (r *cardMutationsResolver) Prio(ctx context.Context, obj *model.CardMutatio
 		item := val.(*model.Card)
 		item.Prio = payload.Prio
 
+		CardEvent(r.CardObservers,
+			&model.CardEvent{
+				Prio: &model.CardPrioEvent{
+					ID:   payload.ID,
+					Prio: payload.Prio,
+				},
+			})
 		return item, nil
 	}
 	return nil, fmt.Errorf("no card for id: %s", payload.ID)
@@ -175,6 +191,15 @@ func (r *chipMutationsResolver) Add(ctx context.Context, obj *model.ChipMutation
 	}
 	r.Chip.Store(payload.ID, item)
 
+	ChipEvent(r.ChipObservers, &model.ChipEvent{
+		Add: &model.ChipAddEvent{
+			ID:    payload.ID,
+			X:     payload.X,
+			Y:     payload.Y,
+			Color: payload.Color,
+		},
+	})
+
 	return item, nil
 }
 
@@ -192,6 +217,14 @@ func (r *chipMutationsResolver) Move(ctx context.Context, obj *model.ChipMutatio
 		item.X = payload.X
 		item.Y = payload.Y
 
+		ChipEvent(r.ChipObservers, &model.ChipEvent{
+			Move: &model.ChipMoveEvent{
+				ID: payload.ID,
+				X:  payload.X,
+				Y:  payload.Y,
+			},
+		})
+
 		return item, nil
 	}
 	return nil, fmt.Errorf("no card for id: %s", payload.ID)
@@ -207,6 +240,12 @@ func (r *chipMutationsResolver) Remove(ctx context.Context, obj *model.ChipMutat
 
 		item := val.(*model.Chip)
 		r.Chip.Delete(payload.ID)
+
+		ChipEvent(r.ChipObservers, &model.ChipEvent{
+			Remove: &model.ChipRemoveEvent{
+				ID: payload.ID,
+			},
+		})
 
 		return item, nil
 	}
@@ -239,6 +278,8 @@ func (r *diceQueriesResolver) Val(ctx context.Context, obj *model.DiceQueries) (
 
 func (r *intuitionMutationsResolver) Set(ctx context.Context, obj *model.IntuitionMutations, val bool) (bool, error) {
 	r.Intuition = val
+
+	IntuitionEvent(r.IntuitionObservers, val)
 
 	return r.Intuition, nil
 }
@@ -287,7 +328,6 @@ func (r *subscriptionResolver) Dice(ctx context.Context) (<-chan int, error) {
 		<-ctx.Done()
 		r.DiceObservers.Delete(id)
 	}()
-	// Keep a reference of the channel so that we can push changes into it when new messages are posted.
 	r.DiceObservers.Store(id, msgs)
 
 	return msgs, nil
@@ -301,8 +341,33 @@ func (r *subscriptionResolver) Card(ctx context.Context) (<-chan *model.CardEven
 		<-ctx.Done()
 		r.DiceObservers.Delete(id)
 	}()
-	// Keep a reference of the channel so that we can push changes into it when new messages are posted.
 	r.CardObservers.Store(id, msgs)
+
+	return msgs, nil
+}
+
+func (r *subscriptionResolver) Chip(ctx context.Context) (<-chan *model.ChipEvent, error) {
+	id := uuid.NewString()
+	msgs := make(chan *model.ChipEvent, 1)
+
+	go func() {
+		<-ctx.Done()
+		r.ChipObservers.Delete(id)
+	}()
+	r.ChipObservers.Store(id, msgs)
+
+	return msgs, nil
+}
+
+func (r *subscriptionResolver) Intuition(ctx context.Context) (<-chan bool, error) {
+	id := uuid.NewString()
+	msgs := make(chan bool, 1)
+
+	go func() {
+		<-ctx.Done()
+		r.IntuitionObservers.Delete(id)
+	}()
+	r.IntuitionObservers.Store(id, msgs)
 
 	return msgs, nil
 }

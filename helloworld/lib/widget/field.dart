@@ -8,8 +8,10 @@ import 'package:logger/logger.dart';
 import 'package:flutter/material.dart';
 
 import '../model/card_model.dart';
+import '../model/chip_model.dart';
 import '../model/utils.dart';
 import 'card.dart';
+import 'chip.dart';
 
 var logger = Logger();
 
@@ -21,26 +23,102 @@ class FieldWidget extends StatefulWidget {
 }
 
 class FieldState extends State<FieldWidget> {
+  Widget game = Positioned(
+      left: 600,
+      top: 100,
+      child: SizedBox(
+        height: 600,
+        width: 600,
+        child: Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('images/game.png'),
+              fit:BoxFit.cover
+            )
+          ),
+        )));
+  Widget heaven = Positioned(
+      left: 1200,
+      top: 100,
+      child: SizedBox(
+        height: 200,
+        width: 200,
+        child: Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage('images/heaven.png'),
+              fit:BoxFit.cover
+            )
+          ),
+        )));
+
   List<CardWidget> children = [];
+  List<ChipWidget> chips = [];
 
   @override
   Widget build(BuildContext context) {
     return Stack(fit: StackFit.expand,
       clipBehavior: Clip.none,
-      children: children);
+      children: [
+        game,
+        heaven,
+        ...children,
+        ...chips]);
+  }
+  
+  void moveChip(ValueKey key, Offset offset, {bool local = true}) {
+    final index = chips.indexWhere((element) => element.key == key);
+    if (index == -1) {
+      logger.i("Chip with $key for move not found");
+      return;
+    }
+    ChipWidget child = chips[index];
+
+    if (child.offset == offset) {
+      return;
+    }
+    ChipWidget replacement = ChipWidget(
+      move: child.move,
+      remove: child.remove,
+      offset: offset,
+      color: child.color,
+      key: child.key);
+    chips[index] = replacement;
+    
+    setState(() {});
+
+    if (local) {
+      moveChipNetwork(key.value, offset.dx, offset.dy);
+    }
+  }
+
+  void removeChip(ValueKey key, {bool local = true}) {
+    chips.removeWhere((element) => element.key == key);
+    
+    setState(() {});
+
+    if (local) {
+      removeChipNetwork(key.value);
+    }
   }
 
   void move(ValueKey key, Offset offset, {bool local = true}) {
     final index = children.indexWhere((Widget element) => element.key == key);
+    if (index == -1) {
+      logger.i("Element with $key for move not found");
+      return;
+    }
     CardWidget child = children[index];
     
-    Offset newpos = child.offset + offset;
+    if (child.offset == offset) {
+      return;
+    }
     CardWidget replacement = CardWidget(text: child.text, 
       move: child.move, 
       remove: child.remove,
       setPrio: child.setPrio,
       triggerFlip: child.triggerFlip,
-      offset: newpos,
+      offset: offset,
       size: child.size,
       prio: child.prio,
       backgroundColor: child.backgroundColor,
@@ -53,26 +131,24 @@ class FieldState extends State<FieldWidget> {
     setState(() {});
 
     if (local) {
-      moveCard(key.value, newpos.dx, newpos.dy);
+      moveCardNetwork(key.value, offset.dx, offset.dy);
     }
   }
 
   void remove(ValueKey key, {bool local = true}) {
-    children.removeAt(children.indexWhere((Widget element) => element.key == key));
+    children.removeWhere((element) => element.key == key);
     setState(() {});
     if (local) {
-      removeCard(key.value);
+      removeCardNetwork(key.value);
     }
   }
 
-  void sort() {
-    children.sort((Widget a, Widget b) {
-      return (a as CardWidget).prio - (b as CardWidget).prio;
-    });
-  }
-
-  void flip(ValueKey key, {bool local = true}) {
+  void flip(ValueKey key, bool flip, {bool local = true}) {
     final index = children.indexWhere((Widget element) => element.key == key);
+    if (index == -1) {
+      logger.i("Element with $key for flip not found");
+      return;
+    }
     CardWidget child = children[index];
     
     CardWidget replacement = CardWidget(text: child.text,
@@ -85,7 +161,7 @@ class FieldState extends State<FieldWidget> {
       prio: child.prio,
       backgroundColor: child.backgroundColor,
       flipable: child.flipable,
-      flip: !child.flip,
+      flip: flip,
       fliptext: child.fliptext,
       key: child.key);
     children[index] = replacement;
@@ -93,12 +169,16 @@ class FieldState extends State<FieldWidget> {
     setState(() {});
 
     if (local) {
-      flipCard(key.value, !child.flip);
+      flipCardNetwork(key.value, flip);
     }
   }
 
   void prio(ValueKey key, int prio, {bool local = true}) {
     final index = children.indexWhere((Widget element) => element.key == key);
+    if (index == -1) {
+      logger.i("Element with $key for prio not found");
+      return;
+    }
     CardWidget child = children[index];
     
     CardWidget replacement = CardWidget(text: child.text,
@@ -120,7 +200,7 @@ class FieldState extends State<FieldWidget> {
     setState(() {});
 
     if (local) {
-      changePrioCard(key.value, prio);
+      changePrioCardNetwork(key.value, prio);
     }
   }
 
@@ -129,7 +209,7 @@ class FieldState extends State<FieldWidget> {
 
     if (replacement.prio > child.prio) {
       for (int i = index + 1; i < children.length; ++i) {
-        if (children[i].prio < replacement.prio) {
+        if (children[i].prio <= replacement.prio) {
           children[i - 1] = children[i];
           children[i] = replacement;
         } else {
@@ -138,7 +218,7 @@ class FieldState extends State<FieldWidget> {
       }
     } else if (replacement.prio < child.prio) {
       for (int i = index - 1; i >= 0; --i) {
-        if (children[i].prio > replacement.prio) {
+        if (children[i].prio >= replacement.prio) {
           children[i + 1] = children[i];
           children[i] = replacement;
         } else {
@@ -150,14 +230,12 @@ class FieldState extends State<FieldWidget> {
 
   // NETWORK PART
   final GraphQLClient client;
-  int lastSend;
-  int lastPoll;
   final Duration pollInterval;
-  final Duration sendInterval;
   late final Completer<bool> task;
-  late final Completer<bool> task2;
   late final Stream subscription;
-  Map<String, Offset> toSendXY;
+  late final Stream chipSubscription;
+  late final StreamSubscription stream;
+  late final StreamSubscription chipStream;
 
   static final policies = Policies(
     fetch: FetchPolicy.noCache,
@@ -173,11 +251,7 @@ class FieldState extends State<FieldWidget> {
                               subscribe: policies,
                               watchMutation: policies,
                             ),),
-      pollInterval = Duration(seconds: 30),
-      sendInterval = Duration(seconds: 1),
-      lastSend = DateTime.now().millisecondsSinceEpoch,
-      lastPoll = DateTime.now().millisecondsSinceEpoch,
-      toSendXY = {},
+      pollInterval = const Duration(seconds: 30),
       super();
 
   @override
@@ -190,12 +264,10 @@ class FieldState extends State<FieldWidget> {
               id text x y color flipable flip 
               fliptext prio sizex sizey
             }
-            remove {
-              id
-            }
-            move {
-              id x y
-            }
+            remove { id }
+            move { id x y }
+            flip { id flip }
+            prio { id prio }
           }
         }
       ''',
@@ -205,36 +277,75 @@ class FieldState extends State<FieldWidget> {
         document: subscriptionRequest
       ),
     );
-    subscription.listen(onMessage);
+    stream = subscription.listen(onMessage);
+
+    final chipSubscriptionRequest = gql(
+      r'''
+        subscription {
+          chip {
+            add { id x y color }
+            remove { id }
+            move { id x y }
+          }
+        }
+      ''',
+    );
+    chipSubscription = client.subscribe(
+      SubscriptionOptions(
+        document: chipSubscriptionRequest
+      ),
+    );
+    chipStream = chipSubscription.listen(onMessage);
     
     poll(null);
+    pollChips(null);
 
     //task = periodic(pollInterval, poll);
-    task2 = periodic(sendInterval, send);
 
     super.initState();
   }
 
+
+  // WEBSOCKET PUSH
   void onMessage(event) {
-    logger.i(event.data);
-    if (event.data.containsKey('add')) {
-      addElement(event.data['add']);
-      setState(() {});
-    } else if (event.data.containsKey('remove')) {
-      remove(event.data['remove']['id']);
-    } else if (event.data.containsKey('move')) {
-      Offset offset = Offset(event.data['move']['id']['x'],
-        event.data['move']['id']['y']);
-      move(event.data['move']['id'], offset, local: false);
+    if (event.data.containsKey('card')) {
+      final Map card = event.data['card'];
+      if (card['add'] != null ) {
+        insertOrUpdateCardFromNetwork(card['add']);
+        setState(() {});
+      } else if (card['remove'] != null) {
+        ValueKey key = ValueKey<String>(card['remove']['id']);
+        remove(key, local: false);
+        setState(() {});
+      } else if (card['move'] != null) {
+        ValueKey key = ValueKey<String>(card['move']['id']);
+        Offset offset = Offset(card['move']['x'],
+          card['move']['y']);
+        move(key, offset, local: false);
+      } else if (card['flip'] != null) {
+        ValueKey key = ValueKey<String>(card['flip']['id']);
+        flip(key, card['flip']['flip'], local: false);
+      }
+    } else if (event.data.containsKey('chip')) {
+      final Map chip = event.data['chip'];
+      if (chip['add'] != null) {
+        insertOrUpdateChipFromNetwork(chip['add']);
+        setState(() {});
+      } else if (chip['remove'] != null) {
+        ValueKey key = ValueKey<String>(chip['remove']['id']);
+        removeChip(key, local: false);
+      } else if (chip['move'] != null) {
+        ValueKey key = ValueKey<String>(chip['move']['id']);
+        Offset offset = Offset(chip['move']['x'], chip['move']['y']);
+        moveChip(key, offset, local: false);
+      }
     }
   }
 
+
+
   // timer
   void poll(event) async {
-    int now = DateTime.now().millisecondsSinceEpoch;
-    //if (now - lastPoll < 200) {
-    //  return ;
-    //}
     final cardQuery = gql(r'''
       { card 
         {
@@ -251,17 +362,55 @@ class FieldState extends State<FieldWidget> {
       return;
     }
 
-    final list = result.data?['card']['list'];
+    final List list = result.data?['card']['list'];
     
-    list.forEach(addElement);
-    setState(() {});
+    list.forEach(insertOrUpdateCardFromNetwork);
 
-    lastPoll = DateTime.now().millisecondsSinceEpoch;
+    setState(() {});
   }
 
-  void addElement(element) {
-    CardModel item = CardModel.fromJson(element);
+  void pollChips(event) async {
+    final chipQuery = gql(r'''
+      { chip { list { id x y color} } }
+    ''');
+    final QueryOptions options = QueryOptions(
+        document: chipQuery
+    );
 
+    final QueryResult result = await client.query(options);
+
+    if (result.hasException) {
+      logger.i(result.exception.toString());
+      return;
+    }
+
+    final List list = result.data?['chip']['list'];
+    list.forEach(insertOrUpdateChipFromNetwork);
+    setState(() {});
+  }
+
+  void insertOrUpdateChipFromNetwork(element) {
+    ChipModel item = ChipModel.fromJson(element);
+    final key = ValueKey(item.id);
+  
+    final Offset offset = Offset(item.x, item.y);
+    final widget = ChipWidget(
+      move: moveChip, 
+      remove: removeChip, 
+      offset: offset,
+      color: Color(item.color),
+      key: key,
+    );
+    final index = chips.indexWhere((element) => element.key == key);
+    if (index != -1) {
+      chips[index] = widget;
+    } else {
+      chips.add(widget);
+    }
+  }
+
+  void insertOrUpdateCardFromNetwork(element) {
+    CardModel item = CardModel.fromJson(element);
     final key = ValueKey(item.id);
     final widget = CardWidget(text: item.text, 
       move: move,
@@ -296,8 +445,7 @@ class FieldState extends State<FieldWidget> {
     }
   }
 
-  // timer
-  void send(event) async {
+  void moveCardNetwork(String id, double x, double y) async {
     final mutation = gql(r'''
         mutation ($id: ID! $x: Float! $y: Float!){
           card {
@@ -307,15 +455,9 @@ class FieldState extends State<FieldWidget> {
           }
         }
       ''');
-
-    toSendXY.forEach((key, value) async {
-      final MutationOptions options = MutationOptions(
+    final MutationOptions options = MutationOptions(
         document: mutation,
-        variables: <String, dynamic>{
-          'id': key,
-          'x':  value.dx,
-          'y': value.dy,
-        },
+        variables: { 'id': id, 'x':  x, 'y': y, },
       );
 
       final QueryResult result = await client.mutate(options);
@@ -324,17 +466,9 @@ class FieldState extends State<FieldWidget> {
         logger.i(result.exception.toString());
         return;
       }
-    });
-    toSendXY = {};
   }
 
-  
-
-  void moveCard(String id, double x, double y) async {
-    toSendXY[id] = Offset(x, y);
-  }
-
-  void flipCard(String id, bool flip) async {
+  void flipCardNetwork(String id, bool flip) async {
     final mutation = gql(r'''
       mutation ($id: ID! $flip: Boolean!){
         card {
@@ -344,30 +478,21 @@ class FieldState extends State<FieldWidget> {
         }
       }
     ''');
+    
+    final MutationOptions options = MutationOptions(
+      document: mutation,
+      variables: { "id": id, "flip": flip, }
+    );
 
-    int now = DateTime.now().millisecondsSinceEpoch;
+    final QueryResult result = await client.mutate(options);
 
-    if (now - lastSend > 200) {      
-      final MutationOptions options = MutationOptions(
-        document: mutation,
-        variables: {
-          "id": id,
-          "flip": flip,
-        }
-      );
-
-      final QueryResult result = await client.mutate(options);
-
-      if (result.hasException) {
-        logger.i(result.exception.toString());
-        return;
-      }
-
-      lastSend = now;
+    if (result.hasException) {
+      logger.i(result.exception.toString());
+      return;
     }
   }
 
-  void changePrioCard(String id, int prio) async {
+  void changePrioCardNetwork(String id, int prio) async {
     final mutation = gql(r'''
       mutation ($id: ID! $prio: Int!){
         card {
@@ -379,29 +504,20 @@ class FieldState extends State<FieldWidget> {
       }
     ''');
 
-    int now = DateTime.now().millisecondsSinceEpoch;
+    final MutationOptions options = MutationOptions(
+      document: mutation,
+      variables: { "id": id, "prio": prio, }
+    );
 
-    if (now - lastSend > 200) {      
-      final MutationOptions options = MutationOptions(
-        document: mutation,
-        variables: {
-          "id": id,
-          "prio": prio,
-        }
-      );
+    final QueryResult result = await client.mutate(options);
 
-      final QueryResult result = await client.mutate(options);
-
-      if (result.hasException) {
-        logger.i(result.exception.toString());
-        return;
-      }
-
-      lastSend = now;
+    if (result.hasException) {
+      logger.i(result.exception.toString());
+      return;
     }
   }
 
-  void removeCard(String id) async {
+  void removeCardNetwork(String id) async {
     final mutation = gql(r'''
       mutation ($id: ID!){
         card {
@@ -412,13 +528,32 @@ class FieldState extends State<FieldWidget> {
       }
     ''');
 
-    int now = DateTime.now().millisecondsSinceEpoch;
-    if (now - lastSend > 20) {      
-      final MutationOptions options = MutationOptions(
+    final MutationOptions options = MutationOptions(
+      document: mutation,
+      variables: { 'id': id, },
+    );
+
+    final QueryResult result = await client.mutate(options);
+
+    if (result.hasException) {
+      logger.i(result.exception.toString());
+      return;
+    }
+  }
+
+  void moveChipNetwork(String id, double x, double y) async {
+    final mutation = gql(r'''
+        mutation ($id: ID! $x: Float! $y: Float!) {
+          chip {
+            move(payload:{id:$id x:$x y:$y}) {
+              id
+            }
+          }
+        }
+      ''');
+    final MutationOptions options = MutationOptions(
         document: mutation,
-        variables: <String, dynamic>{
-          'id': id,
-        },
+        variables: { 'id': id, 'x':  x, 'y': y, },
       );
 
       final QueryResult result = await client.mutate(options);
@@ -427,15 +562,36 @@ class FieldState extends State<FieldWidget> {
         logger.i(result.exception.toString());
         return;
       }
+  }
 
-      lastSend = now;
+  void removeChipNetwork(String id) async {
+    final mutation = gql(r'''
+        mutation ($id: ID!) {
+          chip {
+            remove(payload:{id:$id}) {
+              id
+            }
+          }
+        }
+      ''');
+    final MutationOptions options = MutationOptions(
+      document: mutation,
+      variables: { 'id': id, },
+    );
+
+    final QueryResult result = await client.mutate(options);
+
+    if (result.hasException) {
+      logger.i(result.exception.toString());
+      return;
     }
   }
 
   @override
   void dispose() {
     task.complete(true);
-    task2.complete(true);
+    stream.cancel();
+    chipStream.cancel();
     super.dispose();
   }
 }

@@ -84,8 +84,15 @@ type ComplexityRoot struct {
 
 	CardEvent struct {
 		Add    func(childComplexity int) int
+		Flip   func(childComplexity int) int
 		Move   func(childComplexity int) int
+		Prio   func(childComplexity int) int
 		Remove func(childComplexity int) int
+	}
+
+	CardFlipEvent struct {
+		Flip func(childComplexity int) int
+		ID   func(childComplexity int) int
 	}
 
 	CardMoveEvent struct {
@@ -100,6 +107,11 @@ type ComplexityRoot struct {
 		Move   func(childComplexity int, payload *model.CardMovePayload) int
 		Prio   func(childComplexity int, payload *model.CardPrioPayload) int
 		Remove func(childComplexity int, payload *model.CardRemovePayload) int
+	}
+
+	CardPrioEvent struct {
+		ID   func(childComplexity int) int
+		Prio func(childComplexity int) int
 	}
 
 	CardQueries struct {
@@ -117,6 +129,25 @@ type ComplexityRoot struct {
 		Y     func(childComplexity int) int
 	}
 
+	ChipAddEvent struct {
+		Color func(childComplexity int) int
+		ID    func(childComplexity int) int
+		X     func(childComplexity int) int
+		Y     func(childComplexity int) int
+	}
+
+	ChipEvent struct {
+		Add    func(childComplexity int) int
+		Move   func(childComplexity int) int
+		Remove func(childComplexity int) int
+	}
+
+	ChipMoveEvent struct {
+		ID func(childComplexity int) int
+		X  func(childComplexity int) int
+		Y  func(childComplexity int) int
+	}
+
 	ChipMutations struct {
 		Add    func(childComplexity int, payload model.ChipAddPayload) int
 		Move   func(childComplexity int, payload *model.CardMovePayload) int
@@ -125,6 +156,10 @@ type ComplexityRoot struct {
 
 	ChipQueries struct {
 		List func(childComplexity int) int
+	}
+
+	ChipRemoveEvent struct {
+		ID func(childComplexity int) int
 	}
 
 	DiceMutations struct {
@@ -158,12 +193,10 @@ type ComplexityRoot struct {
 	}
 
 	Subscription struct {
-		Card func(childComplexity int) int
-		Dice func(childComplexity int) int
-	}
-
-	Update struct {
-		ID func(childComplexity int) int
+		Card      func(childComplexity int) int
+		Chip      func(childComplexity int) int
+		Dice      func(childComplexity int) int
+		Intuition func(childComplexity int) int
 	}
 }
 
@@ -212,6 +245,8 @@ type QueryResolver interface {
 type SubscriptionResolver interface {
 	Dice(ctx context.Context) (<-chan int, error)
 	Card(ctx context.Context) (<-chan *model.CardEvent, error)
+	Chip(ctx context.Context) (<-chan *model.ChipEvent, error)
+	Intuition(ctx context.Context) (<-chan bool, error)
 }
 
 type executableSchema struct {
@@ -390,6 +425,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CardEvent.Add(childComplexity), true
 
+	case "CardEvent.flip":
+		if e.complexity.CardEvent.Flip == nil {
+			break
+		}
+
+		return e.complexity.CardEvent.Flip(childComplexity), true
+
 	case "CardEvent.move":
 		if e.complexity.CardEvent.Move == nil {
 			break
@@ -397,12 +439,33 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CardEvent.Move(childComplexity), true
 
+	case "CardEvent.prio":
+		if e.complexity.CardEvent.Prio == nil {
+			break
+		}
+
+		return e.complexity.CardEvent.Prio(childComplexity), true
+
 	case "CardEvent.remove":
 		if e.complexity.CardEvent.Remove == nil {
 			break
 		}
 
 		return e.complexity.CardEvent.Remove(childComplexity), true
+
+	case "CardFlipEvent.flip":
+		if e.complexity.CardFlipEvent.Flip == nil {
+			break
+		}
+
+		return e.complexity.CardFlipEvent.Flip(childComplexity), true
+
+	case "CardFlipEvent.id":
+		if e.complexity.CardFlipEvent.ID == nil {
+			break
+		}
+
+		return e.complexity.CardFlipEvent.ID(childComplexity), true
 
 	case "CardMoveEvent.id":
 		if e.complexity.CardMoveEvent.ID == nil {
@@ -485,6 +548,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.CardMutations.Remove(childComplexity, args["payload"].(*model.CardRemovePayload)), true
 
+	case "CardPrioEvent.id":
+		if e.complexity.CardPrioEvent.ID == nil {
+			break
+		}
+
+		return e.complexity.CardPrioEvent.ID(childComplexity), true
+
+	case "CardPrioEvent.prio":
+		if e.complexity.CardPrioEvent.Prio == nil {
+			break
+		}
+
+		return e.complexity.CardPrioEvent.Prio(childComplexity), true
+
 	case "CardQueries.list":
 		if e.complexity.CardQueries.List == nil {
 			break
@@ -526,6 +603,76 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Chip.Y(childComplexity), true
+
+	case "ChipAddEvent.color":
+		if e.complexity.ChipAddEvent.Color == nil {
+			break
+		}
+
+		return e.complexity.ChipAddEvent.Color(childComplexity), true
+
+	case "ChipAddEvent.id":
+		if e.complexity.ChipAddEvent.ID == nil {
+			break
+		}
+
+		return e.complexity.ChipAddEvent.ID(childComplexity), true
+
+	case "ChipAddEvent.x":
+		if e.complexity.ChipAddEvent.X == nil {
+			break
+		}
+
+		return e.complexity.ChipAddEvent.X(childComplexity), true
+
+	case "ChipAddEvent.y":
+		if e.complexity.ChipAddEvent.Y == nil {
+			break
+		}
+
+		return e.complexity.ChipAddEvent.Y(childComplexity), true
+
+	case "ChipEvent.add":
+		if e.complexity.ChipEvent.Add == nil {
+			break
+		}
+
+		return e.complexity.ChipEvent.Add(childComplexity), true
+
+	case "ChipEvent.move":
+		if e.complexity.ChipEvent.Move == nil {
+			break
+		}
+
+		return e.complexity.ChipEvent.Move(childComplexity), true
+
+	case "ChipEvent.remove":
+		if e.complexity.ChipEvent.Remove == nil {
+			break
+		}
+
+		return e.complexity.ChipEvent.Remove(childComplexity), true
+
+	case "ChipMoveEvent.id":
+		if e.complexity.ChipMoveEvent.ID == nil {
+			break
+		}
+
+		return e.complexity.ChipMoveEvent.ID(childComplexity), true
+
+	case "ChipMoveEvent.x":
+		if e.complexity.ChipMoveEvent.X == nil {
+			break
+		}
+
+		return e.complexity.ChipMoveEvent.X(childComplexity), true
+
+	case "ChipMoveEvent.y":
+		if e.complexity.ChipMoveEvent.Y == nil {
+			break
+		}
+
+		return e.complexity.ChipMoveEvent.Y(childComplexity), true
 
 	case "ChipMutations.add":
 		if e.complexity.ChipMutations.Add == nil {
@@ -569,6 +716,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.ChipQueries.List(childComplexity), true
+
+	case "ChipRemoveEvent.id":
+		if e.complexity.ChipRemoveEvent.ID == nil {
+			break
+		}
+
+		return e.complexity.ChipRemoveEvent.ID(childComplexity), true
 
 	case "DiceMutations.set":
 		if e.complexity.DiceMutations.Set == nil {
@@ -671,6 +825,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Subscription.Card(childComplexity), true
 
+	case "Subscription.chip":
+		if e.complexity.Subscription.Chip == nil {
+			break
+		}
+
+		return e.complexity.Subscription.Chip(childComplexity), true
+
 	case "Subscription.dice":
 		if e.complexity.Subscription.Dice == nil {
 			break
@@ -678,12 +839,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Subscription.Dice(childComplexity), true
 
-	case "Update.id":
-		if e.complexity.Update.ID == nil {
+	case "Subscription.intuition":
+		if e.complexity.Subscription.Intuition == nil {
 			break
 		}
 
-		return e.complexity.Update.ID(childComplexity), true
+		return e.complexity.Subscription.Intuition(childComplexity), true
 
 	}
 	return 0, false
@@ -906,10 +1067,6 @@ type Mutation {
   intuition: IntuitionMutations!
 }
 
-type Update {
-  id: String!
-}
-
 type CardAddEvent {
   id: ID!
   text: String!
@@ -934,15 +1091,52 @@ type CardMoveEvent {
   y: Float!
 }
 
+type CardPrioEvent {
+  id: ID!
+  prio: Int!
+}
+
+type CardFlipEvent {
+  id: ID!
+  flip: Boolean!
+}
+
 type CardEvent {
   add: CardAddEvent
   remove: CardRemoveEvent
   move: CardMoveEvent
+  prio: CardPrioEvent
+  flip: CardFlipEvent
+}
+
+type ChipAddEvent {
+  id: ID!
+  color: Int!
+  x: Float!
+  y: Float!
+}
+
+type ChipRemoveEvent {
+  id: ID!
+}
+
+type ChipMoveEvent {
+  id: ID!
+  x: Float!
+  y: Float!
+}
+
+type ChipEvent {
+  add: ChipAddEvent
+  remove: ChipRemoveEvent
+  move: ChipMoveEvent
 }
 
 type Subscription {
   dice: Int!
   card: CardEvent!
+  chip: ChipEvent!
+  intuition: Boolean!
 }
 `, BuiltIn: false},
 }
@@ -2282,6 +2476,188 @@ func (ec *executionContext) fieldContext_CardEvent_move(ctx context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _CardEvent_prio(ctx context.Context, field graphql.CollectedField, obj *model.CardEvent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CardEvent_prio(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Prio, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.CardPrioEvent)
+	fc.Result = res
+	return ec.marshalOCardPrioEvent2ᚖthegameᚋgraphᚋmodelᚐCardPrioEvent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CardEvent_prio(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CardEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CardPrioEvent_id(ctx, field)
+			case "prio":
+				return ec.fieldContext_CardPrioEvent_prio(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CardPrioEvent", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CardEvent_flip(ctx context.Context, field graphql.CollectedField, obj *model.CardEvent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CardEvent_flip(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Flip, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.CardFlipEvent)
+	fc.Result = res
+	return ec.marshalOCardFlipEvent2ᚖthegameᚋgraphᚋmodelᚐCardFlipEvent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CardEvent_flip(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CardEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_CardFlipEvent_id(ctx, field)
+			case "flip":
+				return ec.fieldContext_CardFlipEvent_flip(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type CardFlipEvent", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CardFlipEvent_id(ctx context.Context, field graphql.CollectedField, obj *model.CardFlipEvent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CardFlipEvent_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CardFlipEvent_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CardFlipEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CardFlipEvent_flip(ctx context.Context, field graphql.CollectedField, obj *model.CardFlipEvent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CardFlipEvent_flip(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Flip, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CardFlipEvent_flip(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CardFlipEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CardMoveEvent_id(ctx context.Context, field graphql.CollectedField, obj *model.CardMoveEvent) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CardMoveEvent_id(ctx, field)
 	if err != nil {
@@ -2809,6 +3185,94 @@ func (ec *executionContext) fieldContext_CardMutations_prio(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _CardPrioEvent_id(ctx context.Context, field graphql.CollectedField, obj *model.CardPrioEvent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CardPrioEvent_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CardPrioEvent_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CardPrioEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _CardPrioEvent_prio(ctx context.Context, field graphql.CollectedField, obj *model.CardPrioEvent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_CardPrioEvent_prio(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Prio, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_CardPrioEvent_prio(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "CardPrioEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _CardQueries_list(ctx context.Context, field graphql.CollectedField, obj *model.CardQueries) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CardQueries_list(ctx, field)
 	if err != nil {
@@ -3097,6 +3561,459 @@ func (ec *executionContext) fieldContext_Chip_y(ctx context.Context, field graph
 	return fc, nil
 }
 
+func (ec *executionContext) _ChipAddEvent_id(ctx context.Context, field graphql.CollectedField, obj *model.ChipAddEvent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ChipAddEvent_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ChipAddEvent_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ChipAddEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ChipAddEvent_color(ctx context.Context, field graphql.CollectedField, obj *model.ChipAddEvent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ChipAddEvent_color(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Color, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ChipAddEvent_color(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ChipAddEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ChipAddEvent_x(ctx context.Context, field graphql.CollectedField, obj *model.ChipAddEvent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ChipAddEvent_x(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.X, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ChipAddEvent_x(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ChipAddEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ChipAddEvent_y(ctx context.Context, field graphql.CollectedField, obj *model.ChipAddEvent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ChipAddEvent_y(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Y, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ChipAddEvent_y(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ChipAddEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ChipEvent_add(ctx context.Context, field graphql.CollectedField, obj *model.ChipEvent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ChipEvent_add(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Add, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.ChipAddEvent)
+	fc.Result = res
+	return ec.marshalOChipAddEvent2ᚖthegameᚋgraphᚋmodelᚐChipAddEvent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ChipEvent_add(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ChipEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ChipAddEvent_id(ctx, field)
+			case "color":
+				return ec.fieldContext_ChipAddEvent_color(ctx, field)
+			case "x":
+				return ec.fieldContext_ChipAddEvent_x(ctx, field)
+			case "y":
+				return ec.fieldContext_ChipAddEvent_y(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ChipAddEvent", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ChipEvent_remove(ctx context.Context, field graphql.CollectedField, obj *model.ChipEvent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ChipEvent_remove(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Remove, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.ChipRemoveEvent)
+	fc.Result = res
+	return ec.marshalOChipRemoveEvent2ᚖthegameᚋgraphᚋmodelᚐChipRemoveEvent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ChipEvent_remove(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ChipEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ChipRemoveEvent_id(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ChipRemoveEvent", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ChipEvent_move(ctx context.Context, field graphql.CollectedField, obj *model.ChipEvent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ChipEvent_move(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Move, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.ChipMoveEvent)
+	fc.Result = res
+	return ec.marshalOChipMoveEvent2ᚖthegameᚋgraphᚋmodelᚐChipMoveEvent(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ChipEvent_move(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ChipEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_ChipMoveEvent_id(ctx, field)
+			case "x":
+				return ec.fieldContext_ChipMoveEvent_x(ctx, field)
+			case "y":
+				return ec.fieldContext_ChipMoveEvent_y(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ChipMoveEvent", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ChipMoveEvent_id(ctx context.Context, field graphql.CollectedField, obj *model.ChipMoveEvent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ChipMoveEvent_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ChipMoveEvent_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ChipMoveEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ChipMoveEvent_x(ctx context.Context, field graphql.CollectedField, obj *model.ChipMoveEvent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ChipMoveEvent_x(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.X, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ChipMoveEvent_x(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ChipMoveEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ChipMoveEvent_y(ctx context.Context, field graphql.CollectedField, obj *model.ChipMoveEvent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ChipMoveEvent_y(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Y, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ChipMoveEvent_y(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ChipMoveEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ChipMutations_add(ctx context.Context, field graphql.CollectedField, obj *model.ChipMutations) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ChipMutations_add(ctx, field)
 	if err != nil {
@@ -3341,6 +4258,50 @@ func (ec *executionContext) fieldContext_ChipQueries_list(ctx context.Context, f
 				return ec.fieldContext_Chip_y(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Chip", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ChipRemoveEvent_id(ctx context.Context, field graphql.CollectedField, obj *model.ChipRemoveEvent) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ChipRemoveEvent_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ChipRemoveEvent_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ChipRemoveEvent",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4178,6 +5139,10 @@ func (ec *executionContext) fieldContext_Subscription_card(ctx context.Context, 
 				return ec.fieldContext_CardEvent_remove(ctx, field)
 			case "move":
 				return ec.fieldContext_CardEvent_move(ctx, field)
+			case "prio":
+				return ec.fieldContext_CardEvent_prio(ctx, field)
+			case "flip":
+				return ec.fieldContext_CardEvent_flip(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type CardEvent", field.Name)
 		},
@@ -4185,45 +5150,117 @@ func (ec *executionContext) fieldContext_Subscription_card(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Update_id(ctx context.Context, field graphql.CollectedField, obj *model.Update) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Update_id(ctx, field)
+func (ec *executionContext) _Subscription_chip(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_chip(ctx, field)
 	if err != nil {
-		return graphql.Null
+		return nil
 	}
 	ctx = graphql.WithFieldContext(ctx, fc)
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
+			ret = nil
 		}
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return ec.resolvers.Subscription().Chip(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
+		return nil
 	}
 	if resTmp == nil {
 		if !graphql.HasFieldError(ctx, fc) {
 			ec.Errorf(ctx, "must not be null")
 		}
-		return graphql.Null
+		return nil
 	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return func(ctx context.Context) graphql.Marshaler {
+		res, ok := <-resTmp.(<-chan *model.ChipEvent)
+		if !ok {
+			return nil
+		}
+		return graphql.WriterFunc(func(w io.Writer) {
+			w.Write([]byte{'{'})
+			graphql.MarshalString(field.Alias).MarshalGQL(w)
+			w.Write([]byte{':'})
+			ec.marshalNChipEvent2ᚖthegameᚋgraphᚋmodelᚐChipEvent(ctx, field.Selections, res).MarshalGQL(w)
+			w.Write([]byte{'}'})
+		})
+	}
 }
 
-func (ec *executionContext) fieldContext_Update_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Subscription_chip(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Update",
+		Object:     "Subscription",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "add":
+				return ec.fieldContext_ChipEvent_add(ctx, field)
+			case "remove":
+				return ec.fieldContext_ChipEvent_remove(ctx, field)
+			case "move":
+				return ec.fieldContext_ChipEvent_move(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ChipEvent", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_intuition(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_intuition(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().Intuition(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		res, ok := <-resTmp.(<-chan bool)
+		if !ok {
+			return nil
+		}
+		return graphql.WriterFunc(func(w io.Writer) {
+			w.Write([]byte{'{'})
+			graphql.MarshalString(field.Alias).MarshalGQL(w)
+			w.Write([]byte{':'})
+			ec.marshalNBoolean2bool(ctx, field.Selections, res).MarshalGQL(w)
+			w.Write([]byte{'}'})
+		})
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_intuition(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6541,6 +7578,49 @@ func (ec *executionContext) _CardEvent(ctx context.Context, sel ast.SelectionSet
 
 			out.Values[i] = ec._CardEvent_move(ctx, field, obj)
 
+		case "prio":
+
+			out.Values[i] = ec._CardEvent_prio(ctx, field, obj)
+
+		case "flip":
+
+			out.Values[i] = ec._CardEvent_flip(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var cardFlipEventImplementors = []string{"CardFlipEvent"}
+
+func (ec *executionContext) _CardFlipEvent(ctx context.Context, sel ast.SelectionSet, obj *model.CardFlipEvent) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, cardFlipEventImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CardFlipEvent")
+		case "id":
+
+			out.Values[i] = ec._CardFlipEvent_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "flip":
+
+			out.Values[i] = ec._CardFlipEvent_flip(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6715,6 +7795,41 @@ func (ec *executionContext) _CardMutations(ctx context.Context, sel ast.Selectio
 	return out
 }
 
+var cardPrioEventImplementors = []string{"CardPrioEvent"}
+
+func (ec *executionContext) _CardPrioEvent(ctx context.Context, sel ast.SelectionSet, obj *model.CardPrioEvent) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, cardPrioEventImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CardPrioEvent")
+		case "id":
+
+			out.Values[i] = ec._CardPrioEvent_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "prio":
+
+			out.Values[i] = ec._CardPrioEvent_prio(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var cardQueriesImplementors = []string{"CardQueries"}
 
 func (ec *executionContext) _CardQueries(ctx context.Context, sel ast.SelectionSet, obj *model.CardQueries) graphql.Marshaler {
@@ -6818,6 +7933,130 @@ func (ec *executionContext) _Chip(ctx context.Context, sel ast.SelectionSet, obj
 		case "y":
 
 			out.Values[i] = ec._Chip_y(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var chipAddEventImplementors = []string{"ChipAddEvent"}
+
+func (ec *executionContext) _ChipAddEvent(ctx context.Context, sel ast.SelectionSet, obj *model.ChipAddEvent) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, chipAddEventImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ChipAddEvent")
+		case "id":
+
+			out.Values[i] = ec._ChipAddEvent_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "color":
+
+			out.Values[i] = ec._ChipAddEvent_color(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "x":
+
+			out.Values[i] = ec._ChipAddEvent_x(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "y":
+
+			out.Values[i] = ec._ChipAddEvent_y(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var chipEventImplementors = []string{"ChipEvent"}
+
+func (ec *executionContext) _ChipEvent(ctx context.Context, sel ast.SelectionSet, obj *model.ChipEvent) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, chipEventImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ChipEvent")
+		case "add":
+
+			out.Values[i] = ec._ChipEvent_add(ctx, field, obj)
+
+		case "remove":
+
+			out.Values[i] = ec._ChipEvent_remove(ctx, field, obj)
+
+		case "move":
+
+			out.Values[i] = ec._ChipEvent_move(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var chipMoveEventImplementors = []string{"ChipMoveEvent"}
+
+func (ec *executionContext) _ChipMoveEvent(ctx context.Context, sel ast.SelectionSet, obj *model.ChipMoveEvent) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, chipMoveEventImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ChipMoveEvent")
+		case "id":
+
+			out.Values[i] = ec._ChipMoveEvent_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "x":
+
+			out.Values[i] = ec._ChipMoveEvent_x(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "y":
+
+			out.Values[i] = ec._ChipMoveEvent_y(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -6944,6 +8183,34 @@ func (ec *executionContext) _ChipQueries(ctx context.Context, sel ast.SelectionS
 				return innerFunc(ctx)
 
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var chipRemoveEventImplementors = []string{"ChipRemoveEvent"}
+
+func (ec *executionContext) _ChipRemoveEvent(ctx context.Context, sel ast.SelectionSet, obj *model.ChipRemoveEvent) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, chipRemoveEventImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ChipRemoveEvent")
+		case "id":
+
+			out.Values[i] = ec._ChipRemoveEvent_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7336,37 +8603,13 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 		return ec._Subscription_dice(ctx, fields[0])
 	case "card":
 		return ec._Subscription_card(ctx, fields[0])
+	case "chip":
+		return ec._Subscription_chip(ctx, fields[0])
+	case "intuition":
+		return ec._Subscription_intuition(ctx, fields[0])
 	default:
 		panic("unknown field " + strconv.Quote(fields[0].Name))
 	}
-}
-
-var updateImplementors = []string{"Update"}
-
-func (ec *executionContext) _Update(ctx context.Context, sel ast.SelectionSet, obj *model.Update) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, updateImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("Update")
-		case "id":
-
-			out.Values[i] = ec._Update_id(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
 }
 
 var __DirectiveImplementors = []string{"__Directive"}
@@ -7870,6 +9113,20 @@ func (ec *executionContext) unmarshalNChipAddPayload2thegameᚋgraphᚋmodelᚐC
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNChipEvent2thegameᚋgraphᚋmodelᚐChipEvent(ctx context.Context, sel ast.SelectionSet, v model.ChipEvent) graphql.Marshaler {
+	return ec._ChipEvent(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNChipEvent2ᚖthegameᚋgraphᚋmodelᚐChipEvent(ctx context.Context, sel ast.SelectionSet, v *model.ChipEvent) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ChipEvent(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNChipMutations2thegameᚋgraphᚋmodelᚐChipMutations(ctx context.Context, sel ast.SelectionSet, v model.ChipMutations) graphql.Marshaler {
 	return ec._ChipMutations(ctx, sel, &v)
 }
@@ -8300,6 +9557,13 @@ func (ec *executionContext) marshalOCardAddEvent2ᚖthegameᚋgraphᚋmodelᚐCa
 	return ec._CardAddEvent(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOCardFlipEvent2ᚖthegameᚋgraphᚋmodelᚐCardFlipEvent(ctx context.Context, sel ast.SelectionSet, v *model.CardFlipEvent) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CardFlipEvent(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOCardFlipPayload2ᚖthegameᚋgraphᚋmodelᚐCardFlipPayload(ctx context.Context, v interface{}) (*model.CardFlipPayload, error) {
 	if v == nil {
 		return nil, nil
@@ -8323,6 +9587,13 @@ func (ec *executionContext) unmarshalOCardMovePayload2ᚖthegameᚋgraphᚋmodel
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalOCardPrioEvent2ᚖthegameᚋgraphᚋmodelᚐCardPrioEvent(ctx context.Context, sel ast.SelectionSet, v *model.CardPrioEvent) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CardPrioEvent(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOCardPrioPayload2ᚖthegameᚋgraphᚋmodelᚐCardPrioPayload(ctx context.Context, v interface{}) (*model.CardPrioPayload, error) {
 	if v == nil {
 		return nil, nil
@@ -8344,6 +9615,27 @@ func (ec *executionContext) unmarshalOCardRemovePayload2ᚖthegameᚋgraphᚋmod
 	}
 	res, err := ec.unmarshalInputCardRemovePayload(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOChipAddEvent2ᚖthegameᚋgraphᚋmodelᚐChipAddEvent(ctx context.Context, sel ast.SelectionSet, v *model.ChipAddEvent) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ChipAddEvent(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOChipMoveEvent2ᚖthegameᚋgraphᚋmodelᚐChipMoveEvent(ctx context.Context, sel ast.SelectionSet, v *model.ChipMoveEvent) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ChipMoveEvent(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOChipRemoveEvent2ᚖthegameᚋgraphᚋmodelᚐChipRemoveEvent(ctx context.Context, sel ast.SelectionSet, v *model.ChipRemoveEvent) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._ChipRemoveEvent(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

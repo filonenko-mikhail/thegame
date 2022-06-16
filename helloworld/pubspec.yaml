@@ -38,3 +38,9 @@ dev_dependencies:
 flutter:
 
   uses-material-design: true
+  
+  assets:
+    - assets/images/game.png
+    - assets/images/heaven.png
+    - images/game.png
+    - images/heaven.png

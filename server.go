@@ -77,6 +77,8 @@ func serve(cmd *cobra.Command, args []string) error {
 		Intuition: true,
     	DiceObservers: sync.Map{},
 		CardObservers: sync.Map{},
+		ChipObservers: sync.Map{},
+		IntuitionObservers: sync.Map{},
 	}
 	srv := handler.New(
 		generated.NewExecutableSchema(generated.
