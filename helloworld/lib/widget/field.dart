@@ -66,7 +66,7 @@ class FieldState extends State<FieldWidget> {
         ...chips]);
   }
   
-  void moveChip(ValueKey key, Offset offset, {bool local = true}) {
+  void moveChip(ValueKey<String> key, Offset offset, {bool local = true}) {
     final index = chips.indexWhere((element) => element.key == key);
     if (index == -1) {
       logger.i("Chip with $key for move not found");
@@ -92,7 +92,7 @@ class FieldState extends State<FieldWidget> {
     }
   }
 
-  void removeChip(ValueKey key, {bool local = true}) {
+  void removeChip(ValueKey<String> key, {bool local = true}) {
     chips.removeWhere((element) => element.key == key);
     
     setState(() {});
@@ -251,7 +251,7 @@ class FieldState extends State<FieldWidget> {
                               subscribe: policies,
                               watchMutation: policies,
                             ),),
-      pollInterval = const Duration(seconds: 30),
+      pollInterval = const Duration(seconds: 60),
       super();
 
   @override
@@ -300,7 +300,10 @@ class FieldState extends State<FieldWidget> {
     poll(null);
     pollChips(null);
 
-    //task = periodic(pollInterval, poll);
+    task = periodic(pollInterval, (int _) {
+      poll(null);
+      pollChips(null);
+    });
 
     super.initState();
   }
@@ -332,10 +335,10 @@ class FieldState extends State<FieldWidget> {
         insertOrUpdateChipFromNetwork(chip['add']);
         setState(() {});
       } else if (chip['remove'] != null) {
-        ValueKey key = ValueKey<String>(chip['remove']['id']);
+        final key = ValueKey<String>(chip['remove']['id']);
         removeChip(key, local: false);
       } else if (chip['move'] != null) {
-        ValueKey key = ValueKey<String>(chip['move']['id']);
+        final key = ValueKey<String>(chip['move']['id']);
         Offset offset = Offset(chip['move']['x'], chip['move']['y']);
         moveChip(key, offset, local: false);
       }

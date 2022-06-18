@@ -7,14 +7,14 @@ import 'package:flutter/material.dart';
 var logger = Logger();
 
 class ChipWidget extends StatelessWidget {
-  final move;
-  final remove;
+  final void Function(ValueKey<String>, Offset) move;
+  final void Function(ValueKey<String>) remove;
   final Offset offset;
   final Color color;
   
   const ChipWidget({Key? key,
-    @required this.move,
-    @required this.remove,
+    required this.move,
+    required this.remove,
     required this.offset,
     required this.color,})
     : super(key: key);
@@ -24,7 +24,7 @@ class ChipWidget extends StatelessWidget {
     final Widget content = 
       GestureDetector(
         onLongPress: () {
-          remove(key);
+          remove(key as ValueKey<String>);
         },
         child: Container(
           width: 40.0,
@@ -41,7 +41,7 @@ class ChipWidget extends StatelessWidget {
           childWhenDragging: Container(),
           onDragEnd: (info) {
             RenderBox renderObject = context.findRenderObject()! as RenderBox;
-            move(key, offset + renderObject.globalToLocal(info.offset));
+            move(key as ValueKey<String>, offset + renderObject.globalToLocal(info.offset));
           },
 
       child: content));

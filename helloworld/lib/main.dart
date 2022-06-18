@@ -7,10 +7,13 @@ import 'widget/intuition.dart';
 import 'widget/field.dart';
 import 'widget/menu.dart';
 
+import 'login.dart';
+
 var logger = Logger();
 
 
 void main() {
+  
   runApp(const MyApp());
 }
 
@@ -19,15 +22,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool isLogged = false;
     return MaterialApp(
       title: 'Transformation',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
       home: const MyHomePage(title: 'Game'),
+      initialRoute: '/login',
+      routes: {
+        '/login': (context) => LoginPage(),
+        '/home': (context) => const MyHomePage(title: 'Game'),
+      },
     );
   }
 }
+
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({Key? key, required this.title}) : super(key: key);

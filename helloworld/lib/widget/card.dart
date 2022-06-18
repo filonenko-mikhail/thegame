@@ -7,10 +7,10 @@ import 'package:flutter/material.dart';
 var logger = Logger();
 
 class CardWidget extends StatelessWidget {
-  final move;
-  final remove;
-  final triggerFlip;
-  final setPrio;
+  final void Function(ValueKey<String>, Offset) move;
+  final void Function(ValueKey<String>) remove;
+  final void Function(ValueKey<String>, bool) triggerFlip;
+  final void Function(ValueKey<String>, int) setPrio;
   final String text;
   final Offset offset;
   final Size size;
@@ -22,10 +22,12 @@ class CardWidget extends StatelessWidget {
   
   const CardWidget({Key? key,
     required this.text,
-    @required this.move,
-    @required this.remove,
-    @required this.triggerFlip,
-    @required this.setPrio,
+    
+    required this.move,
+    required this.remove,
+    required this.triggerFlip,
+    required this.setPrio,
+
     required this.offset,
     required this.size,
     required this.prio,
@@ -48,16 +50,16 @@ class CardWidget extends StatelessWidget {
       splashRadius: 12.0,
       iconSize: 12.0,
       onPressed: () {
-        setPrio(key, prio + 1);
+        setPrio(key as ValueKey<String>, prio + 1);
       });
     Widget downButton = IconButton(
-      padding: EdgeInsets.all(2),
+      padding: const EdgeInsets.all(2),
       constraints: const BoxConstraints(),
       icon: const Icon(Icons.move_down, size: 12.0),
       splashRadius: 12.0,
       iconSize: 12.0,
       onPressed: () {
-        setPrio(key, prio - 1);
+        setPrio(key as ValueKey<String>, prio - 1);
       });
     
     final Widget removeButton = InkWell(
@@ -68,13 +70,13 @@ class CardWidget extends StatelessWidget {
         child: const Icon(Icons.close, size: 12.0),
       ),
       onLongPress: () {
-        remove(key);
+        remove(key as ValueKey<String>);
       });
     Widget flipButton = InkWell(
       radius: 12.0,
       borderRadius: BorderRadius.zero,
       onLongPress: () {
-        triggerFlip(key, !flip);
+        triggerFlip(key as ValueKey<String>, !flip);
       },
       child: Ink(
         padding: EdgeInsets.zero,
@@ -111,7 +113,7 @@ class CardWidget extends StatelessWidget {
           childWhenDragging: Container(),
           onDragEnd: (info) {
             RenderBox renderObject = context.findRenderObject()! as RenderBox;
-            move(key, offset + renderObject.globalToLocal(info.offset));
+            move(key as ValueKey<String>, offset + renderObject.globalToLocal(info.offset));
           },
           child: content,
       ));
