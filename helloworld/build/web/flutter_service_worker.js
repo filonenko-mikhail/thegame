@@ -4,9 +4,10 @@ const TEMP = 'flutter-temp-cache';
 const CACHE_NAME = 'flutter-app-cache';
 const RESOURCES = {
   "version.json": "faddeee7b0e6f59275d0f6d9a243a536",
-"index.html": "85e76bd6fd3703997d3d5cd9177f8810",
-"/": "85e76bd6fd3703997d3d5cd9177f8810",
-"main.dart.js": "e0ce9e3a1e969f6b8558393f463baec6",
+"index.html": "9cb4cf953b7f0b4a77506f1e0906c4bd",
+"/": "9cb4cf953b7f0b4a77506f1e0906c4bd",
+"main.dart.js": "8788f20e55a3a36e6b6b8e1b909f42e4",
+"flutter.js": "eb2682e33f25cd8f1fc59011497c35f8",
 "favicon.png": "5dcef449791fa27946b3d35ad8803796",
 "icons/Icon-192.png": "ac9a721a12bbc803b44f645561ecb1e1",
 "icons/Icon-maskable-192.png": "c457ef57daa1d16f64b27b786ec2ea3c",
@@ -22,7 +23,11 @@ const RESOURCES = {
 "assets/packages/flex_color_picker/assets/opacity.png": "49c4f3bcb1b25364bb4c255edcaaf5b2",
 "assets/fonts/MaterialIcons-Regular.otf": "95db9098c58fd6db106f1116bae85a0b",
 "assets/assets/images/game.png": "acd31cdd542e29bf66d5147755f2de3e",
-"assets/assets/images/heaven.png": "be4609cc6e43a83a1534dde62b49a90b"
+"assets/assets/images/heaven.png": "be4609cc6e43a83a1534dde62b49a90b",
+"canvaskit/canvaskit.js": "c2b4e5f3d7a3d82aed024e7249a78487",
+"canvaskit/profiling/canvaskit.js": "ae2949af4efc61d28a4a80fffa1db900",
+"canvaskit/profiling/canvaskit.wasm": "95e736ab31147d1b2c7b25f11d4c32cd",
+"canvaskit/canvaskit.wasm": "4b83d89d9fecbea8ca46f2f760c5a9ba"
 };
 
 // The application shell files that are downloaded before a service worker can
