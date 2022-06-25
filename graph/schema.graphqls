@@ -113,11 +113,35 @@ type ChipMutations {
   remove(payload: CardRemovePayload): Chip! @goField(forceResolver: true)
 }
 
+enum ContentType {
+  ANGEL,
+  PHYSICAL_KNOWING,
+  EMOTIONAL_KNOWING,
+  MENTAL_KNOWING,
+  SPIRIT_KNOWING,
+
+  INSIGHT,
+  SETBACK,
+  FEEDBACK
+}
+
+type Content {
+  id: ID!
+  type: ContentType
+  title: String
+  description: String
+}
+
+type ContentQueries {
+  list: [Content!]! @goField(forceResolver: true)
+}
+
 type Query {
   dice: DiceQueries!
   card: CardQueries!
   chip: ChipQueries!
   intuition: IntuitionQueries!
+  content: ContentQueries!
 }
 
 type Mutation {

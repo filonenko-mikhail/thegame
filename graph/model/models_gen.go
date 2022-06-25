@@ -2,6 +2,12 @@
 
 package model
 
+import (
+	"fmt"
+	"io"
+	"strconv"
+)
+
 type Card struct {
 	ID       string  `json:"id"`
 	Text     string  `json:"text"`
@@ -157,6 +163,17 @@ type ChipRemoveEvent struct {
 	ID string `json:"id"`
 }
 
+type Content struct {
+	ID          string       `json:"id"`
+	Type        *ContentType `json:"type"`
+	Title       *string      `json:"title"`
+	Description *string      `json:"description"`
+}
+
+type ContentQueries struct {
+	List []*Content `json:"list"`
+}
+
 type DiceMutations struct {
 	Set int `json:"set"`
 }
@@ -171,4 +188,57 @@ type IntuitionMutations struct {
 
 type IntuitionQueries struct {
 	Val bool `json:"val"`
+}
+
+type ContentType string
+
+const (
+	ContentTypeAngel            ContentType = "ANGEL"
+	ContentTypePhysicalKnowing  ContentType = "PHYSICAL_KNOWING"
+	ContentTypeEmotionalKnowing ContentType = "EMOTIONAL_KNOWING"
+	ContentTypeMentalKnowing    ContentType = "MENTAL_KNOWING"
+	ContentTypeSpiritKnowing    ContentType = "SPIRIT_KNOWING"
+	ContentTypeInsight          ContentType = "INSIGHT"
+	ContentTypeSetback          ContentType = "SETBACK"
+	ContentTypeFeedback         ContentType = "FEEDBACK"
+)
+
+var AllContentType = []ContentType{
+	ContentTypeAngel,
+	ContentTypePhysicalKnowing,
+	ContentTypeEmotionalKnowing,
+	ContentTypeMentalKnowing,
+	ContentTypeSpiritKnowing,
+	ContentTypeInsight,
+	ContentTypeSetback,
+	ContentTypeFeedback,
+}
+
+func (e ContentType) IsValid() bool {
+	switch e {
+	case ContentTypeAngel, ContentTypePhysicalKnowing, ContentTypeEmotionalKnowing, ContentTypeMentalKnowing, ContentTypeSpiritKnowing, ContentTypeInsight, ContentTypeSetback, ContentTypeFeedback:
+		return true
+	}
+	return false
+}
+
+func (e ContentType) String() string {
+	return string(e)
+}
+
+func (e *ContentType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = ContentType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid ContentType", str)
+	}
+	return nil
+}
+
+func (e ContentType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
 }

@@ -23,3 +23,10 @@ CREATE TABLE chips(
     color BIGINT NOT NULL,
     PRIMARY KEY(chip_id)
 );
+
+CREATE TABLE content(
+    content_id UUID PRIMARY KEY,
+    content_type TEXT NOT NULL,
+    title    TEXT NOT NULL,
+    content  TEXT NULL
+);

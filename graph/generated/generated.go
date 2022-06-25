@@ -41,6 +41,7 @@ type ResolverRoot interface {
 	CardQueries() CardQueriesResolver
 	ChipMutations() ChipMutationsResolver
 	ChipQueries() ChipQueriesResolver
+	ContentQueries() ContentQueriesResolver
 	DiceMutations() DiceMutationsResolver
 	DiceQueries() DiceQueriesResolver
 	IntuitionMutations() IntuitionMutationsResolver
@@ -162,6 +163,17 @@ type ComplexityRoot struct {
 		ID func(childComplexity int) int
 	}
 
+	Content struct {
+		Description func(childComplexity int) int
+		ID          func(childComplexity int) int
+		Title       func(childComplexity int) int
+		Type        func(childComplexity int) int
+	}
+
+	ContentQueries struct {
+		List func(childComplexity int) int
+	}
+
 	DiceMutations struct {
 		Set func(childComplexity int, val int) int
 	}
@@ -188,6 +200,7 @@ type ComplexityRoot struct {
 	Query struct {
 		Card      func(childComplexity int) int
 		Chip      func(childComplexity int) int
+		Content   func(childComplexity int) int
 		Dice      func(childComplexity int) int
 		Intuition func(childComplexity int) int
 	}
@@ -218,6 +231,9 @@ type ChipMutationsResolver interface {
 type ChipQueriesResolver interface {
 	List(ctx context.Context, obj *model.ChipQueries) ([]*model.Chip, error)
 }
+type ContentQueriesResolver interface {
+	List(ctx context.Context, obj *model.ContentQueries) ([]*model.Content, error)
+}
 type DiceMutationsResolver interface {
 	Set(ctx context.Context, obj *model.DiceMutations, val int) (int, error)
 }
@@ -241,6 +257,7 @@ type QueryResolver interface {
 	Card(ctx context.Context) (*model.CardQueries, error)
 	Chip(ctx context.Context) (*model.ChipQueries, error)
 	Intuition(ctx context.Context) (*model.IntuitionQueries, error)
+	Content(ctx context.Context) (*model.ContentQueries, error)
 }
 type SubscriptionResolver interface {
 	Dice(ctx context.Context) (<-chan int, error)
@@ -724,6 +741,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ChipRemoveEvent.ID(childComplexity), true
 
+	case "Content.description":
+		if e.complexity.Content.Description == nil {
+			break
+		}
+
+		return e.complexity.Content.Description(childComplexity), true
+
+	case "Content.id":
+		if e.complexity.Content.ID == nil {
+			break
+		}
+
+		return e.complexity.Content.ID(childComplexity), true
+
+	case "Content.title":
+		if e.complexity.Content.Title == nil {
+			break
+		}
+
+		return e.complexity.Content.Title(childComplexity), true
+
+	case "Content.type":
+		if e.complexity.Content.Type == nil {
+			break
+		}
+
+		return e.complexity.Content.Type(childComplexity), true
+
+	case "ContentQueries.list":
+		if e.complexity.ContentQueries.List == nil {
+			break
+		}
+
+		return e.complexity.ContentQueries.List(childComplexity), true
+
 	case "DiceMutations.set":
 		if e.complexity.DiceMutations.Set == nil {
 			break
@@ -803,6 +855,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Chip(childComplexity), true
+
+	case "Query.content":
+		if e.complexity.Query.Content == nil {
+			break
+		}
+
+		return e.complexity.Query.Content(childComplexity), true
 
 	case "Query.dice":
 		if e.complexity.Query.Dice == nil {
@@ -1053,11 +1112,35 @@ type ChipMutations {
   remove(payload: CardRemovePayload): Chip! @goField(forceResolver: true)
 }
 
+enum ContentType {
+  ANGEL,
+  PHYSICAL_KNOWING,
+  EMOTIONAL_KNOWING,
+  MENTAL_KNOWING,
+  SPIRIT_KNOWING,
+
+  INSIGHT,
+  SETBACK,
+  FEEDBACK
+}
+
+type Content {
+  id: ID!
+  type: ContentType
+  title: String
+  description: String
+}
+
+type ContentQueries {
+  list: [Content!]! @goField(forceResolver: true)
+}
+
 type Query {
   dice: DiceQueries!
   card: CardQueries!
   chip: ChipQueries!
   intuition: IntuitionQueries!
+  content: ContentQueries!
 }
 
 type Mutation {
@@ -4307,6 +4390,227 @@ func (ec *executionContext) fieldContext_ChipRemoveEvent_id(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Content_id(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Content_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Content_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Content",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Content_type(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Content_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.ContentType)
+	fc.Result = res
+	return ec.marshalOContentType2ᚖthegameᚋgraphᚋmodelᚐContentType(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Content_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Content",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ContentType does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Content_title(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Content_title(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Content_title(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Content",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Content_description(ctx context.Context, field graphql.CollectedField, obj *model.Content) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Content_description(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Content_description(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Content",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ContentQueries_list(ctx context.Context, field graphql.CollectedField, obj *model.ContentQueries) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ContentQueries_list(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.ContentQueries().List(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Content)
+	fc.Result = res
+	return ec.marshalNContent2ᚕᚖthegameᚋgraphᚋmodelᚐContentᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ContentQueries_list(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ContentQueries",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Content_id(ctx, field)
+			case "type":
+				return ec.fieldContext_Content_type(ctx, field)
+			case "title":
+				return ec.fieldContext_Content_title(ctx, field)
+			case "description":
+				return ec.fieldContext_Content_description(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Content", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _DiceMutations_set(ctx context.Context, field graphql.CollectedField, obj *model.DiceMutations) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_DiceMutations_set(ctx, field)
 	if err != nil {
@@ -4896,6 +5200,54 @@ func (ec *executionContext) fieldContext_Query_intuition(ctx context.Context, fi
 				return ec.fieldContext_IntuitionQueries_val(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type IntuitionQueries", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_content(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_content(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Content(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.ContentQueries)
+	fc.Result = res
+	return ec.marshalNContentQueries2ᚖthegameᚋgraphᚋmodelᚐContentQueries(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_content(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "list":
+				return ec.fieldContext_ContentQueries_list(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ContentQueries", field.Name)
 		},
 	}
 	return fc, nil
@@ -8222,6 +8574,87 @@ func (ec *executionContext) _ChipRemoveEvent(ctx context.Context, sel ast.Select
 	return out
 }
 
+var contentImplementors = []string{"Content"}
+
+func (ec *executionContext) _Content(ctx context.Context, sel ast.SelectionSet, obj *model.Content) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, contentImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Content")
+		case "id":
+
+			out.Values[i] = ec._Content_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "type":
+
+			out.Values[i] = ec._Content_type(ctx, field, obj)
+
+		case "title":
+
+			out.Values[i] = ec._Content_title(ctx, field, obj)
+
+		case "description":
+
+			out.Values[i] = ec._Content_description(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var contentQueriesImplementors = []string{"ContentQueries"}
+
+func (ec *executionContext) _ContentQueries(ctx context.Context, sel ast.SelectionSet, obj *model.ContentQueries) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, contentQueriesImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ContentQueries")
+		case "list":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ContentQueries_list(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var diceMutationsImplementors = []string{"DiceMutations"}
 
 func (ec *executionContext) _DiceMutations(ctx context.Context, sel ast.SelectionSet, obj *model.DiceMutations) graphql.Marshaler {
@@ -8550,6 +8983,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_intuition(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "content":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_content(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -9155,6 +9611,74 @@ func (ec *executionContext) marshalNChipQueries2ᚖthegameᚋgraphᚋmodelᚐChi
 	return ec._ChipQueries(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNContent2ᚕᚖthegameᚋgraphᚋmodelᚐContentᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Content) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNContent2ᚖthegameᚋgraphᚋmodelᚐContent(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNContent2ᚖthegameᚋgraphᚋmodelᚐContent(ctx context.Context, sel ast.SelectionSet, v *model.Content) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Content(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNContentQueries2thegameᚋgraphᚋmodelᚐContentQueries(ctx context.Context, sel ast.SelectionSet, v model.ContentQueries) graphql.Marshaler {
+	return ec._ContentQueries(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNContentQueries2ᚖthegameᚋgraphᚋmodelᚐContentQueries(ctx context.Context, sel ast.SelectionSet, v *model.ContentQueries) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ContentQueries(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNDiceMutations2thegameᚋgraphᚋmodelᚐDiceMutations(ctx context.Context, sel ast.SelectionSet, v model.DiceMutations) graphql.Marshaler {
 	return ec._DiceMutations(ctx, sel, &v)
 }
@@ -9636,6 +10160,22 @@ func (ec *executionContext) marshalOChipRemoveEvent2ᚖthegameᚋgraphᚋmodel�
 		return graphql.Null
 	}
 	return ec._ChipRemoveEvent(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOContentType2ᚖthegameᚋgraphᚋmodelᚐContentType(ctx context.Context, v interface{}) (*model.ContentType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.ContentType)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOContentType2ᚖthegameᚋgraphᚋmodelᚐContentType(ctx context.Context, sel ast.SelectionSet, v *model.ContentType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

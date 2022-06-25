@@ -131,7 +131,7 @@ class MenuState extends State<MenuWidget> {
       onTap: () {
         CardModel model = CardModel(const Uuid().v4(), "Эмоциональный уровень", 
         100, 100,
-        Colors.orange[300]!.value, false, false, "", 10, 400, 500);
+        Colors.orange[300]!.value, false, false, "", 3, 400, 500);
         addCardNetwork(model);
       },
       title: const Text("Эмоциональный уровень"));
@@ -139,7 +139,7 @@ class MenuState extends State<MenuWidget> {
       onTap: () {
         CardModel model = CardModel(const Uuid().v4(), "Ментальный уровень", 
         100, 100,
-        Colors.yellow[300]!.value, false, false, "", 20, 400, 500);
+        Colors.yellow[300]!.value, false, false, "", 5, 400, 500);
         addCardNetwork(model);
       },
       title: const Text("Ментальный уровень"));
@@ -147,7 +147,7 @@ class MenuState extends State<MenuWidget> {
       onTap: () {
         CardModel model = CardModel(const Uuid().v4(), "Духовный уровень", 
         100, 100,
-        Colors.blue[300]!.value, false, false, "", 30, 400, 500);
+        Colors.blue[300]!.value, false, false, "", 7, 400, 500);
 
         addCardNetwork(model);
       },
@@ -171,7 +171,7 @@ class MenuState extends State<MenuWidget> {
         Colors.orange[600]!.value,
         true, false,
         // TODO random
-        "Спокойствие", 11, 60, 80);
+        "Спокойствие", 4, 60, 80);
         addCardNetwork(model);
       },
       title: const Text("Эмоциональное Осознание"));
@@ -182,7 +182,7 @@ class MenuState extends State<MenuWidget> {
         Colors.yellow[600]!.value,
         true, false,
         // TODO random
-        "Умиротворённость", 21, 60, 80);
+        "Умиротворённость", 6, 60, 80);
         addCardNetwork(model);
       },
       title: const Text("Ментальное Осознание"));
@@ -193,7 +193,7 @@ class MenuState extends State<MenuWidget> {
         Colors.blue[600]!.value,
         true, false,
         // TODO random
-        "Воссоединение", 31, 60, 80);
+        "Воссоединение", 8, 60, 80);
         addCardNetwork(model);
       },
       title: const Text("Духовное Осознание"));
@@ -202,7 +202,7 @@ class MenuState extends State<MenuWidget> {
       onTap: () {
         CardModel model = CardModel(const Uuid().v4(), "Служение", 
         100, 100, //position
-        Colors.white.value, false, false, "", 40, 60, 80);
+        Colors.white.value, false, false, "", 8, 60, 80);
         addCardNetwork(model);
       },
       title: const Text("Служение"));
@@ -213,7 +213,7 @@ class MenuState extends State<MenuWidget> {
         100, 100,
         Colors.white.value, true, false,
         // TODO random
-        "Ангел: Радость", 40, 120, 80);
+        "Ангел: Радость", 8, 120, 80);
         addCardNetwork(model);
       },
       title: const Text("Ангел"));
@@ -224,7 +224,7 @@ class MenuState extends State<MenuWidget> {
         100, 100,
         Colors.amberAccent.value, true, false,
         // TODO random 
-        "Вы справились с завистью. Возьмите 3 осознания.", 40, 120, 120);
+        "Вы справились с завистью. Возьмите 3 осознания.", 8, 120, 120);
         addCardNetwork(model);
       }),
       title: const Text("Прозрение"));
@@ -234,7 +234,7 @@ class MenuState extends State<MenuWidget> {
         100, 100,
         Colors.blueGrey.value, true, false,
         // TODO random 
-        "Склонность к сплетням. Возьмите 2 боли.", 40, 120, 120);
+        "Склонность к сплетням. Возьмите 2 боли.", 8, 120, 120);
         addCardNetwork(model);
       }),
       title: const Text("Препятствие"));
@@ -244,7 +244,7 @@ class MenuState extends State<MenuWidget> {
         100, 100,
         Colors.blueAccent.value, true, false,
         // TODO random 
-        "Вселенная поддержала вас. Возьмите 2 осознания.", 40, 120, 120);
+        "Вселенная поддержала вас. Возьмите 2 осознания.", 8, 120, 120);
         addCardNetwork(model);
       },
       title: const Text("Обратная связь"));
@@ -252,7 +252,7 @@ class MenuState extends State<MenuWidget> {
       onTap: (() {
         CardModel model = CardModel(const Uuid().v4(), "Боль", 
         100, 100,
-        Colors.blueGrey.value, false, false, "", 40, 60, 60);
+        Colors.blueGrey.value, false, false, "", 8, 60, 60);
         addCardNetwork(model);
       }),
       title: const Text("Боль"));

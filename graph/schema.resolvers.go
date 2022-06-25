@@ -264,6 +264,17 @@ func (r *chipQueriesResolver) List(ctx context.Context, obj *model.ChipQueries) 
 	return result, nil
 }
 
+func (r *contentQueriesResolver) List(ctx context.Context, obj *model.ContentQueries) ([]*model.Content, error) {
+	result := make([]*model.Content, 0)
+	r.Content.Range(
+		func(k interface{}, val interface{}) bool {
+			item := val.(*model.Content)
+			result = append(result, item)
+			return true
+		})
+	return result, nil
+}
+
 func (r *diceMutationsResolver) Set(ctx context.Context, obj *model.DiceMutations, val int) (int, error) {
 	r.Dice = val
 
@@ -318,6 +329,10 @@ func (r *queryResolver) Chip(ctx context.Context) (*model.ChipQueries, error) {
 
 func (r *queryResolver) Intuition(ctx context.Context) (*model.IntuitionQueries, error) {
 	return &model.IntuitionQueries{}, nil
+}
+
+func (r *queryResolver) Content(ctx context.Context) (*model.ContentQueries, error) {
+	return &model.ContentQueries{}, nil
 }
 
 func (r *subscriptionResolver) Dice(ctx context.Context) (<-chan int, error) {
@@ -384,6 +399,11 @@ func (r *Resolver) ChipMutations() generated.ChipMutationsResolver { return &chi
 // ChipQueries returns generated.ChipQueriesResolver implementation.
 func (r *Resolver) ChipQueries() generated.ChipQueriesResolver { return &chipQueriesResolver{r} }
 
+// ContentQueries returns generated.ContentQueriesResolver implementation.
+func (r *Resolver) ContentQueries() generated.ContentQueriesResolver {
+	return &contentQueriesResolver{r}
+}
+
 // DiceMutations returns generated.DiceMutationsResolver implementation.
 func (r *Resolver) DiceMutations() generated.DiceMutationsResolver { return &diceMutationsResolver{r} }
 
@@ -413,6 +433,7 @@ type cardMutationsResolver struct{ *Resolver }
 type cardQueriesResolver struct{ *Resolver }
 type chipMutationsResolver struct{ *Resolver }
 type chipQueriesResolver struct{ *Resolver }
+type contentQueriesResolver struct{ *Resolver }
 type diceMutationsResolver struct{ *Resolver }
 type diceQueriesResolver struct{ *Resolver }
 type intuitionMutationsResolver struct{ *Resolver }

@@ -59,6 +59,18 @@ class _MyHomePageState extends State<MyHomePage> {
             height: 2000,
             width: 2000,
             child: FieldWidget())));
+
+    Widget? floatingPanel = Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        child: Row(
+          children: const [
+            DiceWidget(),
+            Spacer(),
+            IntuitionWidget(),
+          ],
+        ),
+      );
+    
     if (!isLogged) {
       body = Center(
         child: Form(
@@ -71,7 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Padding(padding: const EdgeInsets.all(10),
-                child: TextField(
+                child: TextFormField(
                   decoration: const InputDecoration(
                     border: OutlineInputBorder(),
                     hintText: 'Введите 4 цифры',
@@ -84,6 +96,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   onPressed: onPin,
                   child: const Text("OK")),
             ]))));
+
+      floatingPanel = null;
     }
     return Scaffold(
       appBar: AppBar(
@@ -112,16 +126,7 @@ class _MyHomePageState extends State<MyHomePage> {
       body: body,
       drawer: const MenuWidget(),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-        child: Row(
-          children: const [
-            DiceWidget(),
-            Spacer(),
-            IntuitionWidget(),
-          ],
-        ),
-      ),
+      floatingActionButton: floatingPanel
     );
   }
 

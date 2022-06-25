@@ -11,8 +11,10 @@ import (
 	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/doug-martin/goqu"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
 	"github.com/rs/cors"
@@ -98,6 +100,7 @@ func serve(cmd *cobra.Command, args []string) error {
 	srv.AddTransport(transport.GET{})
 	srv.AddTransport(transport.POST{})
 	srv.AddTransport(transport.MultipartForm{})
+	srv.Use(extension.Introspection{})
 
 	rows, err := db.QueryContext(context.Background(), 
 	`SELECT card_id, body, x, y, color, flipable, flip, fliptext, prio,
@@ -120,6 +123,33 @@ func serve(cmd *cobra.Command, args []string) error {
 			break
 		}
 		resolver.Card.Store(item.ID, &item)
+	}
+
+	ds := goqu.From("content")
+	ds = ds.Select("content_id", "content_type", "title", "content")
+
+	exec, params, err := ds.ToSql()
+	if err != nil {
+		logrus.Info(err)
+		return err
+	}
+
+	rows, err = db.QueryContext(context.Background(), exec, params...)
+	if err != nil {
+		logrus.Info(err)
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		item := model.Content{}
+
+		err := rows.Scan(&item.ID, &item.Type, &item.Title, &item.Description)
+		if err != nil {
+			logrus.Info(err)
+			break
+		}
+		resolver.Content.Store(item.ID, &item)
 	}
 
 	router.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
