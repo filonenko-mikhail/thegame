@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'dart:async';
 
 import 'package:graphql/client.dart';
@@ -23,28 +22,26 @@ class FieldWidget extends StatefulWidget {
 }
 
 class FieldState extends State<FieldWidget> {
-  Widget game = Positioned(
+  final Widget game = Positioned(
       left: 600,
       top: 100,
       child: SizedBox(
         height: 600,
         width: 600,
         child: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             image: DecorationImage(
               image: AssetImage('images/game.png'),
               fit:BoxFit.cover
-            )
-          ),
-        )));
-  Widget heaven = Positioned(
+            )))));
+  final Widget heaven = Positioned(
       left: 1200,
       top: 100,
       child: SizedBox(
         height: 200,
         width: 200,
         child: Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             image: DecorationImage(
               image: AssetImage('images/heaven.png'),
               fit:BoxFit.cover
@@ -83,9 +80,10 @@ class FieldState extends State<FieldWidget> {
       offset: offset,
       color: child.color,
       key: child.key);
-    chips[index] = replacement;
     
-    setState(() {});
+    setState(() {
+      chips[index] = replacement;
+    });
 
     if (local) {
       moveChipNetwork(key.value, offset.dx, offset.dy);
@@ -93,9 +91,9 @@ class FieldState extends State<FieldWidget> {
   }
 
   void removeChip(ValueKey<String> key, {bool local = true}) {
-    chips.removeWhere((element) => element.key == key);
-    
-    setState(() {});
+    setState(() {
+      chips.removeWhere((element) => element.key == key);
+    });
 
     if (local) {
       removeChipNetwork(key.value);
@@ -126,9 +124,10 @@ class FieldState extends State<FieldWidget> {
       flip: child.flip,
       fliptext: child.fliptext,
       key: child.key);
-    children[index] = replacement;
     
-    setState(() {});
+    setState(() {
+      children[index] = replacement;
+    });
 
     if (local) {
       moveCardNetwork(key.value, offset.dx, offset.dy);

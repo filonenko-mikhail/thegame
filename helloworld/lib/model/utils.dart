@@ -6,8 +6,6 @@ import 'package:logger/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 
-import 'package:uuid/uuid.dart';
-
 var logger = Logger();
 
 Completer<bool> periodic(Duration interval, Function(int cycle) callback) {
@@ -45,7 +43,6 @@ class Connection {
 
   static Connection? _instance;
 
-  late String clientId;
   late Link link;
 
   Connection._() {
@@ -67,8 +64,6 @@ class Connection {
     final wslink = WebSocketLink(wsendpoint);
 
     link = Link.split((request) => request.isSubscription, wslink, httpLink);
-
-    clientId = const Uuid().v4();
   }
 
   static Connection get instance => _instance ??= Connection._();

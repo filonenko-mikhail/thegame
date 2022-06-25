@@ -65,8 +65,6 @@ class MenuState extends State<MenuWidget> {
         ),
         TextButton(
           onPressed: () {
-            Size size = textSize(textController.text, 200);
-
             CardModel model = CardModel(const Uuid().v4(), 
               textController.text, 
               100, 100,
@@ -121,53 +119,53 @@ class MenuState extends State<MenuWidget> {
         )
       ])));
 
-    final TextButton physicalLevel = TextButton(
-      onPressed: () {
+    final ListTile physicalLevel = ListTile(
+      onTap: () {
         CardModel model = CardModel(const Uuid().v4(), "Физический уровень", 
         100, 100,
         Colors.red[300]!.value, false, false, "", 0, 400, 500);
         addCardNetwork(model);
       },
-      child: Text("Физический"));
-    final TextButton emotionalLevel = TextButton(
-      onPressed: () {
+      title: const Text("Физический уровень"));
+    final ListTile emotionalLevel = ListTile(
+      onTap: () {
         CardModel model = CardModel(const Uuid().v4(), "Эмоциональный уровень", 
         100, 100,
-        Colors.orange[300]!.value, false, false, "", 0, 400, 500);
+        Colors.orange[300]!.value, false, false, "", 10, 400, 500);
         addCardNetwork(model);
       },
-      child: Text("Эмоциональный"));
-    final TextButton mentalLevel = TextButton(
-      onPressed: () {
+      title: const Text("Эмоциональный уровень"));
+    final ListTile mentalLevel = ListTile(
+      onTap: () {
         CardModel model = CardModel(const Uuid().v4(), "Ментальный уровень", 
         100, 100,
-        Colors.yellow[300]!.value, false, false, "", 0, 400, 500);
+        Colors.yellow[300]!.value, false, false, "", 20, 400, 500);
         addCardNetwork(model);
       },
-      child: Text("Ментальный"));
-    final TextButton spiritLevel = TextButton(
-      onPressed: () {
+      title: const Text("Ментальный уровень"));
+    final ListTile spiritLevel = ListTile(
+      onTap: () {
         CardModel model = CardModel(const Uuid().v4(), "Духовный уровень", 
         100, 100,
-        Colors.blue[300]!.value, false, false, "", 0, 400, 500);
+        Colors.blue[300]!.value, false, false, "", 30, 400, 500);
 
         addCardNetwork(model);
       },
-      child: Text("Духовный"));
-    final TextButton physicalKnowing = TextButton(
-      onPressed: () {
+      title: const Text("Духовный уровень"));
+    final ListTile physicalKnowing = ListTile(
+      onTap: () {
         CardModel model = CardModel(const Uuid().v4(), "Осознание", 
         100, 100, //position
         Colors.red[600]!.value,
         true, false,
         // TODO random
-        "Здоровье", 11, 60, 80);
+        "Здоровье", 1, 60, 80);
         addCardNetwork(model);
       },
-      child: Text("Физическое Осознание") 
+      title: const Text("Физическое Осознание") 
     );
-    final TextButton emotionalKnowing = TextButton(
-      onPressed: () {
+    final ListTile emotionalKnowing = ListTile(
+      onTap: () {
         CardModel model = CardModel(const Uuid().v4(), "Осознание", 
         100, 100, //position
         Colors.orange[600]!.value,
@@ -176,123 +174,133 @@ class MenuState extends State<MenuWidget> {
         "Спокойствие", 11, 60, 80);
         addCardNetwork(model);
       },
-      child: Text("Эмоциональное Осознание"));
-    final TextButton mentalKnowing = TextButton(
-      onPressed: () {
+      title: const Text("Эмоциональное Осознание"));
+    final ListTile mentalKnowing = ListTile(
+      onTap: () {
         CardModel model = CardModel(const Uuid().v4(), "Осознание", 
         100, 100, //position
         Colors.yellow[600]!.value,
         true, false,
         // TODO random
-        "Умиротворённость", 11, 60, 80);
+        "Умиротворённость", 21, 60, 80);
         addCardNetwork(model);
       },
-      child: Text("Ментальное Осознание"));
-    final TextButton spiritKnowing = TextButton(
-      onPressed: () {
+      title: const Text("Ментальное Осознание"));
+    final ListTile spiritKnowing = ListTile(
+      onTap: () {
         CardModel model = CardModel(const Uuid().v4(), "Осознание", 
         100, 100, //position
         Colors.blue[600]!.value,
         true, false,
         // TODO random
-        "Воссоединение", 11, 60, 80);
+        "Воссоединение", 31, 60, 80);
         addCardNetwork(model);
       },
-      child: Text("Духовное Осознание"));
+      title: const Text("Духовное Осознание"));
 
-    final TextButton serviceButton = TextButton(
-      onPressed: () {
+    final ListTile serviceButton = ListTile(
+      onTap: () {
         CardModel model = CardModel(const Uuid().v4(), "Служение", 
         100, 100, //position
-        Colors.white.value, false, false, "", 11, 60, 80);
+        Colors.white.value, false, false, "", 40, 60, 80);
         addCardNetwork(model);
       },
-      child: Text("Служение"));
+      title: const Text("Служение"));
 
-    final TextButton angelButton = TextButton(
-      onPressed: () {
+    final ListTile angelButton = ListTile(
+      onTap: () {
         CardModel model = CardModel(const Uuid().v4(), "Ангел", 
         100, 100,
         Colors.white.value, true, false,
         // TODO random
-        "Ангел: Радость", 10, 120, 80);
+        "Ангел: Радость", 40, 120, 80);
         addCardNetwork(model);
       },
-      child: Text("Ангел"));
+      title: const Text("Ангел"));
     
-    final TextButton insightButton = TextButton(
-      onPressed: (() {
+    final ListTile insightButton = ListTile(
+      onTap: (() {
         CardModel model = CardModel(const Uuid().v4(), "Прозрение", 
         100, 100,
         Colors.amberAccent.value, true, false,
         // TODO random 
-        "Вы справились с завистью. Возьмите 3 осознания.", 11, 120, 120);
+        "Вы справились с завистью. Возьмите 3 осознания.", 40, 120, 120);
         addCardNetwork(model);
       }),
-      child: Text("Прозрение"));
-    final TextButton setbackButton = TextButton(
-      onPressed: (() {
+      title: const Text("Прозрение"));
+    final ListTile setbackButton = ListTile(
+      onTap: (() {
         CardModel model = CardModel(const Uuid().v4(), "Препятствие", 
         100, 100,
         Colors.blueGrey.value, true, false,
         // TODO random 
-        "Склонность к сплетням. Возьмите 2 боли.", 11, 120, 120);
+        "Склонность к сплетням. Возьмите 2 боли.", 40, 120, 120);
         addCardNetwork(model);
       }),
-      child: Text("Препятствие"));
-    final TextButton feedbackButton = TextButton(
-      onPressed: () {
+      title: const Text("Препятствие"));
+    final ListTile feedbackButton = ListTile(
+      onTap: () {
         CardModel model = CardModel(const Uuid().v4(), "Обратная связь", 
         100, 100,
         Colors.blueAccent.value, true, false,
         // TODO random 
-        "Вселенная поддержала вас. Возьмите 2 осознания.", 11, 120, 120);
+        "Вселенная поддержала вас. Возьмите 2 осознания.", 40, 120, 120);
         addCardNetwork(model);
       },
-      child: Text("Обратная связь"));
-    final TextButton painButton = TextButton(
-      onPressed: (() {
+      title: const Text("Обратная связь"));
+    final ListTile painButton = ListTile(
+      onTap: (() {
         CardModel model = CardModel(const Uuid().v4(), "Боль", 
         100, 100,
-        Colors.blueGrey.value, false, false, "", 11, 60, 60);
+        Colors.blueGrey.value, false, false, "", 40, 60, 60);
         addCardNetwork(model);
       }),
-      child: Text("Боль"));
+      title: const Text("Боль"));
 
     return Drawer(
-      child: Center(child: Column(
-        children: [
-          TextButton(
-            onPressed: () {
-              showDialog(context: context,
-                builder: (BuildContext context) => createRequest);
-            }, 
-            child: Text("Запрос")),
-          TextButton(
-            onPressed: () {
-              showDialog(context: context,
-                builder: (BuildContext context) => createChip);
-            }, 
-            child: Text("Фишка")),
-          physicalLevel,
-          emotionalLevel,
-          mentalLevel,
-          spiritLevel,
+      child: 
+        ListView(
+          children: [
+            const DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.blue,
+              ),
+              child: Text('Выберите карточку'),
+            ),
+            ListTile(
+              title: const Text('Запрос'),
+              onTap: () {
+                showDialog(context: context,
+                  builder: (BuildContext context) => createRequest);
+              },
+            ),
+            ListTile(
+              title: const Text('Фишка'),
+              onTap: () {
+                showDialog(context: context,
+                  builder: (BuildContext context) => createChip);
+              },
+            ),
 
-          physicalKnowing,
-          emotionalKnowing,
-          mentalKnowing,
-          spiritKnowing,
+            physicalLevel,
+            emotionalLevel,
+            mentalLevel,
+            spiritLevel,
 
-          angelButton,
-          insightButton,
-          setbackButton,
+            physicalKnowing,
+            emotionalKnowing,
+            mentalKnowing,
+            spiritKnowing,
 
-          serviceButton,
+            angelButton,
+            insightButton,
+            setbackButton,
 
-          painButton,
-          feedbackButton,
-        ])));
+            serviceButton,
+
+            painButton,
+            feedbackButton,
+        ]));
   }
 
   // NETWORK  

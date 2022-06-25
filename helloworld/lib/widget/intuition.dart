@@ -26,7 +26,7 @@ class IntuitionPainter extends CustomPainter {
     ..color=Colors.black87
     ..style=PaintingStyle.fill;
 
-  static const textStyle = TextStyle(
+  static const greenTextStyle = TextStyle(
     color: Colors.green,
     fontSize: 24,
   );
@@ -46,8 +46,6 @@ class IntuitionPainter extends CustomPainter {
     // center button paint
     double radius = min(size.width/2, size.height/2) - 3;
     
-   
-
     // outter paints
     if (buttonAngle < 2*pi) {
       canvas.drawArc(Rect.fromCircle(center: size.center(Offset.zero), radius: radius),0, buttonAngle, true, circlePaint);
@@ -55,28 +53,22 @@ class IntuitionPainter extends CustomPainter {
       canvas.drawCircle(size.center(Offset.zero), radius, circlePaint);
     }
 
-    canvas.save();
+    TextStyle textStyle;
+    String text = "";
     if (localValue) {
-      canvas.translate(size.width/2, size.height/2);
-      TextStyle style = textStyle;
-      final textSpan = TextSpan(
-        text: "Молния",
-        style: style,
-      );
-      final textPainter = TextPainter(
-        text: textSpan,
-        textAlign: TextAlign.center,
-        textDirection: TextDirection.ltr,
-      );
-      textPainter.layout();
-      canvas.translate(-textPainter.width/2, -textPainter.height/2);
-      textPainter.paint(canvas, Offset.zero);
+      text = "Молния";
+      textStyle = greenTextStyle;
     } else {
+      text = "Слезинка";
+      textStyle = redTextStyle;
+    }
+    {
+      canvas.save();
+    
       canvas.translate(size.width/2, size.height/2);
-      TextStyle style = redTextStyle;
       final textSpan = TextSpan(
-        text: "Слезинка",
-        style: style,
+        text: text,
+        style: textStyle,
       );
       final textPainter = TextPainter(
         text: textSpan,
@@ -86,9 +78,9 @@ class IntuitionPainter extends CustomPainter {
       textPainter.layout();
       canvas.translate(-textPainter.width/2, -textPainter.height/2);
       textPainter.paint(canvas, Offset.zero);
+    
+      canvas.restore();
     }
-    canvas.restore();
-
   }
 
   @override
@@ -247,9 +239,7 @@ class IntuitionState extends State<IntuitionWidget> {
 
     final MutationOptions options = MutationOptions(
       document: intuitionValMutation,
-      variables: <String, dynamic>{
-        'val': val,
-      },
+      variables: { 'val': val, },
     );
 
     final QueryResult result = await client.mutate(options);
