@@ -26,6 +26,17 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
 
+
+var requestCount = 0
+func logRequest(handler http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestCount = requestCount + 1
+		logrus.Infof("%d -> %s %s %s %s\n", requestCount, r.URL.Scheme, r.RemoteAddr, r.Method, r.URL)
+		handler.ServeHTTP(w, r)
+		logrus.Infof("%d <- %s %s %s %s\n", requestCount, r.URL.Scheme, r.RemoteAddr, r.Method, r.URL)
+	})
+}
+
 func cors(h http.HandlerFunc) http.HandlerFunc {
     return func(w http.ResponseWriter, r *http.Request) {
         w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -112,9 +123,9 @@ func serve(cmd *cobra.Command, args []string) error {
 	srv.Use(extension.Introspection{})
 
 	rows, err := db.QueryContext(context.Background(), 
-	`SELECT card_id, body, x, y, color, flipable, flip, fliptext, prio,
-		sizex, sizey
-	FROM cards`)
+		`SELECT card_id, body, x, y, color, flipable, flip, fliptext, prio,
+			sizex, sizey
+		FROM cards`)
 	if err != nil {
 		logrus.Info(err)
 		return err
@@ -162,7 +173,13 @@ func serve(cmd *cobra.Command, args []string) error {
 	}
 
 	router.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
-	router.HandleFunc("/query", cors(srv.ServeHTTP))
+
+	handler := cors(srv.ServeHTTP)
+	logging, _ := cmd.Flags().GetBool("logging")
+	if logging {
+		handler = logRequest(handler)
+	}
+	router.HandleFunc("/query", handler)
 
 	fs := http.FileServer(http.Dir("."))
 	router.Handle("/*", fs);
@@ -195,6 +212,8 @@ func main() {
 		RunE: serve, 
 	}
 	rootCmd.Flags().String("http-addr", "127.0.0.1:8080", "HTTP listen interface")
+
+	rootCmd.Flags().Bool("logging", false, "Enable logging http graphql")
 	if err := rootCmd.Execute(); err != nil {
 		logrus.Print(err)
 	}
