@@ -58,7 +58,6 @@ class StatusState extends State<StatusWidget> {
 
   @override
   void initState() {
-  
     final subscriptionRequest = gql(
       r'''
         subscription { ping }

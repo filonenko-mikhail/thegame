@@ -32,8 +32,7 @@ class FieldState extends State<FieldWidget> {
           decoration: const BoxDecoration(
             image: DecorationImage(
               image: AssetImage('images/game.png'),
-              fit:BoxFit.cover
-            )))));
+              fit:BoxFit.cover)))));
   final Widget heaven = Positioned(
       left: 1200,
       top: 100,
@@ -363,7 +362,6 @@ class FieldState extends State<FieldWidget> {
     }
 
     final List list = result.data?['card']['list'];
-    
     // TODO clear children
     list.forEach(insertOrUpdateCardFromNetwork);
 

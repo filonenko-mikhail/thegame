@@ -104,6 +104,7 @@ class CardWidget extends StatelessWidget {
               Expanded(child: 
                 SingleChildScrollView(
                   scrollDirection: Axis.vertical,
+                  primary: false,
                   child:
                   textWidget)),
               Column(

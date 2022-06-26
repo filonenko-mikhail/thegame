@@ -272,6 +272,7 @@ func (r *contentQueriesResolver) List(ctx context.Context, obj *model.ContentQue
 			result = append(result, item)
 			return true
 		})
+
 	return result, nil
 }
 

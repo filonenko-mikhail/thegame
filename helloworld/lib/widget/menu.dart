@@ -1,16 +1,18 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:helloworld/model/chip_model.dart';
+import 'package:helloworld/provider/drawer_provider.dart';
 import 'package:logger/logger.dart';
 
 import 'package:graphql/client.dart';
+import 'package:provider/provider.dart';
 
 import 'package:flutter/material.dart';
 
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:uuid/uuid.dart';
 
+import '../model/chip_model.dart';
 import '../model/utils.dart';
 import '../model/card_model.dart';
 import '../model/content_model.dart';
@@ -37,62 +39,11 @@ class MenuState extends State<MenuWidget> {
   void onChipColorChanged(Color color) {
     chipColor = color;
   }
-
-
-  Map<String, Map<String, ContentModel> > content = {};
-  Map<String, bool> field = {};
-
-  showAlertDialog(BuildContext context, String title, String content) {
-    // set up the button
-    Widget okButton = TextButton(
-      child: const Text("OK"),
-      onPressed: () {
-        Navigator.pop(context);
-      },
-    );
-
-    // set up the AlertDialog
-    AlertDialog alert = AlertDialog(
-      title: Text(title),
-      content: Text(content),
-      actions: [
-        okButton,
-      ],
-    );
-
-    // show the dialog
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return alert;
-      },
-    );
-  }
-
-  String randomKey(Map map) {
-    if (map.isNotEmpty) {
-      return map.keys.elementAt(Random.secure().nextInt(map.length));
-    } else {
-      return "";
-    }
-  }
-
+  
   ContentModel? randomContent(String type) {
-    if (!content.containsKey(type)) {
-      logger.i("No content for $type while random");
-    }
-    ContentModel? candidate;
-    for (int i=1; i < 20; i++) {
-      String key = randomKey(content[type]!);
-      candidate = content[type]![key];
-      if (!field.containsKey(candidate!.id)) {
-        break;
-      } else {
-        candidate = null;
-      }
-    }
-    return candidate;
+    return Provider.of<DrawerProvider>(context, listen: false).randomContent(type);
   }
+
   
   @override
   Widget build(BuildContext context) {
@@ -406,12 +357,8 @@ class MenuState extends State<MenuWidget> {
         ]));
   }
 
-  // NETWORK  
+  // NETWORK
   final GraphQLClient client;
-  final Duration pollInterval;
-  late final Completer<bool> task;
-  late final Stream subscription;
-  late final StreamSubscription stream;
   
   static final policies = Policies(
     fetch: FetchPolicy.noCache,
@@ -427,105 +374,8 @@ class MenuState extends State<MenuWidget> {
                               subscribe: policies,
                               watchMutation: policies,
                             ),),
-      pollInterval = const Duration(seconds: 60),
       super();
 
-  @override
-  void initState() {
-    final query = gql(r'''
-      query {
-        content {
-          list {
-            id
-            type
-            title
-            description
-          }
-        }
-      }
-    ''');
-
-    final QueryOptions options = QueryOptions(
-      document: query
-    );
-
-    client.query(options).then(handleContent);
-
-    super.initState();
-  }
-
-  void insertOrUpdateContentFromNetwork(element) {
-    ContentModel item = ContentModel.fromJson(element);
-    if (!content.containsKey(item.type)) {
-      content[item.type] = {};
-    }
-    content[item.type]?[item.id] = item;
-  }
-
-  void handleContent(QueryResult result) {
-    if (result.hasException) {
-      logger.i(result.exception.toString());
-      // TODO RETRY
-      return;
-    }
-
-    final List list = result.data?['content']['list'];    
-    list.forEach(insertOrUpdateContentFromNetwork);
-
-    // START WATCHING FIELD
-    task = periodic(pollInterval, poll);
-    
-    final subscriptionRequest = gql(
-      r'''
-        subscription {
-          card {
-            add { id }
-            remove { id }
-          }
-        }
-      ''',
-    );
-    subscription = client.subscribe(
-      SubscriptionOptions(
-        document: subscriptionRequest
-      ),
-    );
-    stream = subscription.listen(onMessage);
-  }
-
-  void insertOrUpdateCardFromNetwork(element) {
-    field[element['id']] = true;
-  }
-
-  void poll(event) async {
-    final cardQuery = gql(r'''
-      { card { list { id } } }
-    ''');
-    final QueryOptions options = QueryOptions(document: cardQuery);
-
-    final QueryResult result = await client.query(options);
-
-    if (result.hasException) {
-      logger.i(result.exception.toString());
-      return;
-    }
-
-    final List list = result.data?['card']['list'];
-    
-    field.clear();
-    list.forEach(insertOrUpdateCardFromNetwork);
-  }
-
-  // WEBSOCKET PUSH
-  void onMessage(event) {
-    final Map card = event.data['card'];
-    if (card['add'] != null ) {
-      insertOrUpdateCardFromNetwork(card['add']);
-      setState(() {});
-    } else if (card['remove'] != null) {
-      field.remove(card['remove']['id']);
-    }
-  }
 
   void addCardNetwork(CardModel model) async {
     final mutation = gql(r'''
@@ -546,7 +396,6 @@ class MenuState extends State<MenuWidget> {
     );
 
     final QueryResult result = await client.mutate(options);
-
     if (result.hasException) {
       logger.i(result.exception.toString());
       return;
@@ -579,9 +428,4 @@ class MenuState extends State<MenuWidget> {
     }
   }
 
-  @override
-  void dispose() {
-    stream.cancel();
-    super.dispose();
-  }
 }

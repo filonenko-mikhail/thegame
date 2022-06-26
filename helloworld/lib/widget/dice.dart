@@ -184,7 +184,7 @@ class DiceState extends State<DiceWidget> {
                               mutate: policies,
                               subscribe: policies,
                             ),),
-      pollInterval = Duration(seconds: 30),
+      pollInterval = const Duration(seconds: 30),
       value = 1,
       super();
 

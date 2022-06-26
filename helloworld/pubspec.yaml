@@ -14,14 +14,12 @@ dependencies:
 
   cupertino_icons: ^1.0.2
 
-  indexed:
-
-  http: ^0.13.3
+  http: 
   uuid: 
   logger:
-  gql_http_link: #[latest-version]
-  graphql: ^5.1.1
-  json_annotation: ^4.4.0
+  gql_http_link: 
+  graphql: 
+  json_annotation:
   flex_color_picker: 
   universal_html: 
   provider: 

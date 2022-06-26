@@ -17,7 +17,6 @@ import (
 	"github.com/doug-martin/goqu"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
-	"github.com/rs/cors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/cobra"
@@ -26,6 +25,15 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/sqlite"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 )
+
+func cors(h http.HandlerFunc) http.HandlerFunc {
+    return func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Set("Access-Control-Allow-Origin", "*")
+        w.Header().Set("Access-Control-Allow-Methods", "*")
+        w.Header().Set("Access-Control-Allow-Headers", "*")
+        h(w, r)
+    }
+}
 
 func serve(cmd *cobra.Command, args []string) error {
 	logrus.Print("Opening database...")
@@ -59,18 +67,18 @@ func serve(cmd *cobra.Command, args []string) error {
 	logrus.Print("Migrations applied")
 
 	router := chi.NewRouter()
-	router.Use(cors.New(cors.Options{
-		AllowedOrigins:   []string{"*", "http://localhost"},
-		AllowCredentials: true,
-		AllowedMethods: []string{"GET", "PATCH",
-			"POST", 
-			"CONNECT",
-			"DELETE",
-			"UPDATE",
-			"PUT",
-			"OPTIONS"},
-		Debug:            false,
-	}).Handler)
+	// router.Use(cors.New(cors.Options{
+	// 	AllowedOrigins:   []string{"*", "http://localhost"},
+	// 	AllowCredentials: true,
+	// 	AllowedMethods: []string{"GET", "PATCH",
+	// 		"POST", 
+	// 		"CONNECT",
+	// 		"DELETE",
+	// 		"UPDATE",
+	// 		"PUT",
+	// 		"OPTIONS"},
+	// 	Debug:            false,
+	// }).Handler)
 
 	resolver := graph.Resolver{
 		Db: db,
@@ -154,7 +162,7 @@ func serve(cmd *cobra.Command, args []string) error {
 	}
 
 	router.Handle("/playground", playground.Handler("GraphQL playground", "/query"))
-	router.Handle("/query", srv)
+	router.HandleFunc("/query", cors(srv.ServeHTTP))
 
 	fs := http.FileServer(http.Dir("."))
 	router.Handle("/*", fs);

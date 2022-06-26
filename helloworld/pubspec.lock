@@ -326,13 +326,6 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "4.0.1"
-  indexed:
-    dependency: "direct main"
-    description:
-      name: indexed
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.0.8"
   io:
     dependency: transitive
     description:
@@ -620,4 +613,4 @@ packages:
     version: "3.1.1"
 sdks:
   dart: ">=2.17.1 <3.0.0"
-  flutter: ">=1.17.0"
+  flutter: ">=1.16.0"

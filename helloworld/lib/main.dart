@@ -2,6 +2,12 @@ import 'package:logger/logger.dart';
 
 import 'package:flutter/material.dart';
 
+import 'package:provider/provider.dart';
+
+import 'provider/drawer_provider.dart';
+
+import 'model/utils.dart';
+
 import 'widget/dice.dart';
 import 'widget/intuition.dart';
 import 'widget/field.dart';
@@ -11,7 +17,14 @@ import 'widget/status.dart';
 var logger = Logger();
 
 void main() {
-  runApp(const MyApp());
+  DrawerProvider drawerProvider = DrawerProvider();
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => drawerProvider),
+      ],
+      child: const MyApp())
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -39,7 +52,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  bool isLogged = false;
+  bool isLogged = true;
   TextEditingController textController = TextEditingController();
 
   void onPin () {
@@ -48,13 +61,17 @@ class _MyHomePageState extends State<MyHomePage> {
         textController.clear();
         isLogged = true;
       });
+    } else {
+      showAlertDialog(context, "Опс", "Не такой пинкод(");
     }
   }
   @override
   Widget build(BuildContext context) {
     Widget body = const SingleChildScrollView(
         scrollDirection: Axis.vertical,
+        primary: false,
         child: SingleChildScrollView(
+          primary: false,
           scrollDirection: Axis.horizontal,
           child: SizedBox(
             height: 2000,
@@ -72,7 +89,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       );
     
-    Widget? drawer = const MenuWidget();
+    Widget? drawer = const MenuWidget(key: ValueKey("drawerId"));
     if (!isLogged) {
       body = Center(
         child: Form(
