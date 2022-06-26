@@ -344,8 +344,6 @@ class FieldState extends State<FieldWidget> {
     }
   }
 
-
-
   // timer
   void poll(event) async {
     final cardQuery = gql(r'''
@@ -366,6 +364,7 @@ class FieldState extends State<FieldWidget> {
 
     final List list = result.data?['card']['list'];
     
+    // TODO clear children
     list.forEach(insertOrUpdateCardFromNetwork);
 
     setState(() {});

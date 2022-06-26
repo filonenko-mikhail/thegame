@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 
 import 'package:helloworld/model/chip_model.dart';
@@ -35,6 +36,62 @@ class MenuState extends State<MenuWidget> {
 
   void onChipColorChanged(Color color) {
     chipColor = color;
+  }
+
+
+  Map<String, Map<String, ContentModel> > content = {};
+  Map<String, bool> field = {};
+
+  showAlertDialog(BuildContext context, String title, String content) {
+    // set up the button
+    Widget okButton = TextButton(
+      child: const Text("OK"),
+      onPressed: () {
+        Navigator.pop(context);
+      },
+    );
+
+    // set up the AlertDialog
+    AlertDialog alert = AlertDialog(
+      title: Text(title),
+      content: Text(content),
+      actions: [
+        okButton,
+      ],
+    );
+
+    // show the dialog
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return alert;
+      },
+    );
+  }
+
+  String randomKey(Map map) {
+    if (map.isNotEmpty) {
+      return map.keys.elementAt(Random.secure().nextInt(map.length));
+    } else {
+      return "";
+    }
+  }
+
+  ContentModel? randomContent(String type) {
+    if (!content.containsKey(type)) {
+      logger.i("No content for $type while random");
+    }
+    ContentModel? candidate;
+    for (int i=1; i < 20; i++) {
+      String key = randomKey(content[type]!);
+      candidate = content[type]![key];
+      if (!field.containsKey(candidate!.id)) {
+        break;
+      } else {
+        candidate = null;
+      }
+    }
+    return candidate;
   }
   
   @override
@@ -153,48 +210,74 @@ class MenuState extends State<MenuWidget> {
         addCardNetwork(model);
       },
       title: const Text("Духовный уровень"));
-    final ListTile physicalKnowing = ListTile(
+    final ListTile physicalKnowingTile = ListTile(
       onTap: () {
-        CardModel model = CardModel(const Uuid().v4(), "Осознание", 
-        100, 100, //position
-        Colors.red[600]!.value,
-        true, false,
-        // TODO random
-        "Здоровье", 1, 60, 80);
+
+        ContentModel? candidate = randomContent("PHYSICAL_KNOWING");
+        if (candidate == null) {
+          showAlertDialog(context, "Опс", "Эти карточки кончились(");
+          return;
+        }
+        String id = candidate.id;
+
+        CardModel model = CardModel(id, "Осознание", 
+          100, 100, //position
+          Colors.red[600]!.value,
+          true, false,
+          candidate.title, 1, 60, 80);
         addCardNetwork(model);
       },
       title: const Text("Физическое Осознание") 
     );
-    final ListTile emotionalKnowing = ListTile(
+    final ListTile emotionalKnowingTile = ListTile(
       onTap: () {
-        CardModel model = CardModel(const Uuid().v4(), "Осознание", 
-        100, 100, //position
-        Colors.orange[600]!.value,
-        true, false,
-        // TODO random
-        "Спокойствие", 4, 60, 80);
+        ContentModel? candidate = randomContent("EMOTIONAL_KNOWING");
+        if (candidate == null) {
+          showAlertDialog(context, "Опс", "Эти карточки кончились(");
+          return;
+        }
+        String id = candidate.id;
+        
+        CardModel model = CardModel(id, "Осознание", 
+          100, 100, //position
+          Colors.orange[600]!.value,
+          true, false,
+          candidate.title, 4, 60, 80);
         addCardNetwork(model);
       },
       title: const Text("Эмоциональное Осознание"));
-    final ListTile mentalKnowing = ListTile(
+    final ListTile mentalKnowingTile = ListTile(
       onTap: () {
-        CardModel model = CardModel(const Uuid().v4(), "Осознание", 
-        100, 100, //position
-        Colors.yellow[600]!.value,
-        true, false,
-        // TODO random
-        "Умиротворённость", 6, 60, 80);
+        ContentModel? candidate = randomContent("MENTAL_KNOWING");
+        if (candidate == null) {
+          showAlertDialog(context, "Опс", "Эти карточки кончились(");
+          return;
+        }
+        String id = candidate.id;
+
+        CardModel model = CardModel(id, "Осознание", 
+          100, 100, //position
+          Colors.yellow[600]!.value,
+          true, false,
+          candidate.title, 6, 60, 80);
         addCardNetwork(model);
       },
       title: const Text("Ментальное Осознание"));
-    final ListTile spiritKnowing = ListTile(
+    final ListTile spiritKnowingTile = ListTile(
       onTap: () {
-        CardModel model = CardModel(const Uuid().v4(), "Осознание", 
-        100, 100, //position
-        Colors.blue[600]!.value,
-        true, false,
-        // TODO random
-        "Воссоединение", 8, 60, 80);
+        ContentModel? candidate = randomContent("SPIRIT_KNOWING");
+        if (candidate == null) {
+          showAlertDialog(context, "Опс", "Эти карточки кончились(");
+          return;
+        }
+        String id = candidate.id;
+
+        CardModel model = CardModel(id, "Осознание", 
+          100, 100, //position
+          Colors.blue[600]!.value,
+          true, false,
+          // TODO random
+          candidate.title, 8, 60, 80);
         addCardNetwork(model);
       },
       title: const Text("Духовное Осознание"));
@@ -202,58 +285,78 @@ class MenuState extends State<MenuWidget> {
     final ListTile serviceButton = ListTile(
       onTap: () {
         CardModel model = CardModel(const Uuid().v4(), "Служение", 
-        100, 100, //position
-        Colors.white.value, false, false, "", 8, 60, 80);
+          100, 100, //position
+          Colors.white.value, false, false, "", 8, 60, 80);
         addCardNetwork(model);
       },
       title: const Text("Служение"));
 
     final ListTile angelButton = ListTile(
       onTap: () {
-        CardModel model = CardModel(const Uuid().v4(), "Ангел", 
-        100, 100,
-        Colors.white.value, true, false,
-        // TODO random
-        "Ангел: Радость", 8, 120, 80);
+        ContentModel? candidate = randomContent("ANGEL");
+        if (candidate == null) {
+          showAlertDialog(context, "Опс", "Эти карточки кончились(");
+          return;
+        }
+        String id = candidate.id;
+        CardModel model = CardModel(id, "Ангел", 
+          100, 100,
+          Colors.white.value, true, false,
+          candidate.title, 8, 120, 80);
         addCardNetwork(model);
       },
       title: const Text("Ангел"));
     
     final ListTile insightButton = ListTile(
       onTap: (() {
-        CardModel model = CardModel(const Uuid().v4(), "Прозрение", 
-        100, 100,
-        Colors.amberAccent.value, true, false,
-        // TODO random 
-        "Вы справились с завистью. Возьмите 3 осознания.", 8, 120, 120);
+        ContentModel? candidate = randomContent("INSIGHT");
+        if (candidate == null) {
+          showAlertDialog(context, "Опс", "Эти карточки кончились(");
+          return;
+        }
+        String id = candidate.id;
+        CardModel model = CardModel(id, "Прозрение", 
+          100, 100,
+          Colors.amberAccent.value, true, false,
+          candidate.title, 8, 120, 120);
         addCardNetwork(model);
       }),
       title: const Text("Прозрение"));
     final ListTile setbackButton = ListTile(
       onTap: (() {
-        CardModel model = CardModel(const Uuid().v4(), "Препятствие", 
-        100, 100,
-        Colors.blueGrey.value, true, false,
-        // TODO random 
-        "Склонность к сплетням. Возьмите 2 боли.", 8, 120, 120);
+        ContentModel? candidate = randomContent("SETBACK");
+        if (candidate == null) {
+          showAlertDialog(context, "Опс", "Эти карточки кончились(");
+          return;
+        }
+        String id = candidate.id;
+        CardModel model = CardModel(id, "Препятствие", 
+          100, 100,
+          Colors.blueGrey.value, true, false,
+          candidate.title, 8, 120, 120);
         addCardNetwork(model);
       }),
       title: const Text("Препятствие"));
     final ListTile feedbackButton = ListTile(
       onTap: () {
-        CardModel model = CardModel(const Uuid().v4(), "Обратная связь", 
-        100, 100,
-        Colors.blueAccent.value, true, false,
-        // TODO random 
-        "Вселенная поддержала вас. Возьмите 2 осознания.", 8, 120, 120);
+        ContentModel? candidate = randomContent("FEEDBACK");
+        if (candidate == null) {
+          showAlertDialog(context, "Опс", "Эти карточки кончились(");
+          return;
+        }
+        String id = candidate.id;
+        CardModel model = CardModel(id, "Обратная связь", 
+          100, 100,
+          Colors.blueAccent.value, true, false,
+          candidate.title, 8, 120, 120);
         addCardNetwork(model);
       },
       title: const Text("Обратная связь"));
     final ListTile painButton = ListTile(
       onTap: (() {
         CardModel model = CardModel(const Uuid().v4(), "Боль", 
-        100, 100,
-        Colors.blueGrey.value, false, false, "", 8, 60, 60);
+          100, 100,
+          Colors.blueGrey.value, false, false, "", 8, 60, 60);
         addCardNetwork(model);
       }),
       title: const Text("Боль"));
@@ -288,10 +391,10 @@ class MenuState extends State<MenuWidget> {
             mentalLevel,
             spiritLevel,
 
-            physicalKnowing,
-            emotionalKnowing,
-            mentalKnowing,
-            spiritKnowing,
+            physicalKnowingTile,
+            emotionalKnowingTile,
+            mentalKnowingTile,
+            spiritKnowingTile,
 
             angelButton,
             insightButton,
@@ -306,22 +409,14 @@ class MenuState extends State<MenuWidget> {
 
   // NETWORK  
   final GraphQLClient client;
+  final Duration pollInterval;
+  late final Completer<bool> task;
   late final Stream subscription;
+  late final StreamSubscription stream;
   
   static final policies = Policies(
     fetch: FetchPolicy.noCache,
   );
-
-  Map<String, ContentModel> content = {};
-  Map<String, ContentModel> angel = {};
-  Map<String, ContentModel> physicalKnowing = {};
-  Map<String, ContentModel> emotionalKnowing = {};
-  Map<String, ContentModel> mentalKnowing = {};
-  Map<String, ContentModel> spiritKnowing = {};
-  Map<String, ContentModel> insight = {};
-  Map<String, ContentModel> setback = {};
-  Map<String, ContentModel> feedback = {};
-
 
   MenuState()
     : client=GraphQLClient(cache: GraphQLCache(), 
@@ -333,11 +428,11 @@ class MenuState extends State<MenuWidget> {
                               subscribe: policies,
                               watchMutation: policies,
                             ),),
+      pollInterval = const Duration(seconds: 60),
       super();
 
   @override
   void initState() {
-
     final query = gql(r'''
       query {
         content {
@@ -362,43 +457,77 @@ class MenuState extends State<MenuWidget> {
 
   void insertOrUpdateContentFromNetwork(element) {
     ContentModel item = ContentModel.fromJson(element);
-    switch(item.type) {
-    case "ANGEL":
-      angel[item.id] = item;
-      break;
-    case "PHYSICAL_KNOWING":
-      physicalKnowing[item.id] = item;
-      break;
-    case "EMOTIONAL_KNOWING":
-      emotionalKnowing[item.id] = item;
-      break;
-    case "MENTAL_KNOWING":
-      mentalKnowing[item.id] = item;
-      break;
-    case "SPIRIT_KNOWING":
-      spiritKnowing[item.id] = item;
-      break;
-    case "INSIGHT":
-      insight[item.id] = item;
-      break;
-    case "SETBACK":
-      setback[item.id] = item;
-      break;
-    case "FEEDBACK":
-      feedback[item.id] = item;
-      break;
+    if (!content.containsKey(item.type)) {
+      content[item.type] = {};
     }
-      content[item.id] = item;
+    content[item.type]?[item.id] = item;
   }
 
   void handleContent(QueryResult result) {
     if (result.hasException) {
       logger.i(result.exception.toString());
+      // TODO RETRY
       return;
     }
 
     final List list = result.data?['content']['list'];    
     list.forEach(insertOrUpdateContentFromNetwork);
+
+    // START WATCHING FIELD
+    task = periodic(pollInterval, poll);
+    
+    final subscriptionRequest = gql(
+      r'''
+        subscription {
+          card {
+            add { id }
+            remove { id }
+          }
+        }
+      ''',
+    );
+    subscription = client.subscribe(
+      SubscriptionOptions(
+        document: subscriptionRequest
+      ),
+    );
+    stream = subscription.listen(onMessage);
+  }
+
+  void insertOrUpdateCardFromNetwork(element) {
+    field[element['id']] = true;
+  }
+
+  void poll(event) async {
+    final cardQuery = gql(r'''
+      { card { list { id } } }
+    ''');
+    final QueryOptions options = QueryOptions(document: cardQuery);
+
+    final QueryResult result = await client.query(options);
+
+    if (result.hasException) {
+      logger.i(result.exception.toString());
+      return;
+    }
+
+    final List list = result.data?['card']['list'];
+    
+    field.clear();
+    list.forEach(insertOrUpdateCardFromNetwork);
+  }
+
+  // WEBSOCKET PUSH
+  void onMessage(event) {
+    if (event.data.containsKey('card')) {
+      final Map card = event.data['card'];
+      if (card['add'] != null ) {
+        insertOrUpdateCardFromNetwork(card['add']);
+        setState(() {});
+      } else if (card['remove'] != null) {
+        field.remove(card['remove']['id']);
+      }
+    }
   }
 
   void addCardNetwork(CardModel model) async {
@@ -451,5 +580,11 @@ class MenuState extends State<MenuWidget> {
       logger.i(result.exception.toString());
       return;
     }
+  }
+
+  @override
+  void dispose() {
+    stream.cancel();
+    super.dispose();
   }
 }

@@ -71,6 +71,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       );
     
+    Widget? drawer = const MenuWidget();
     if (!isLogged) {
       body = Center(
         child: Form(
@@ -98,6 +99,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ]))));
 
       floatingPanel = null;
+      drawer = null;
     }
     return Scaffold(
       appBar: AppBar(
@@ -124,7 +126,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       ),
       body: body,
-      drawer: const MenuWidget(),
+      drawer: drawer,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: floatingPanel
     );

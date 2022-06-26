@@ -40,8 +40,9 @@ class CardWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    Widget textWidget = Text(flip?fliptext:text);
-    
+    Widget textWidget = Text(
+      flip?fliptext:text,
+      textAlign: TextAlign.center,);
     
     Widget upButton = IconButton(
       padding: EdgeInsets.zero,
@@ -100,7 +101,11 @@ class CardWidget extends StatelessWidget {
           height: size.height,
           child: Row(
             children:[
-              Expanded(child: textWidget),
+              Expanded(child: 
+                SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child:
+                  textWidget)),
               Column(
                 children: controlPanel),
             ])));
