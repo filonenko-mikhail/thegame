@@ -276,7 +276,6 @@ class MenuState extends State<MenuWidget> {
           100, 100, //position
           Colors.blue[600]!.value,
           true, false,
-          // TODO random
           candidate.title, 8, 60, 80);
         addCardNetwork(model);
       },
