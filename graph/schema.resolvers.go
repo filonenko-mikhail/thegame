@@ -53,7 +53,7 @@ func (r *cardMutationsResolver) Add(ctx context.Context, obj *model.CardMutation
 			Sizey:    payload.Sizey,
 		},
 	}
-	CardEvent(r.CardObservers, event)
+	CardEvent(r.CardObservers, event, r)
 
 	return item, nil
 }
@@ -78,7 +78,7 @@ func (r *cardMutationsResolver) Move(ctx context.Context, obj *model.CardMutatio
 				X:  payload.X,
 				Y:  payload.Y,
 			},
-		})
+		}, r)
 
 		return item, nil
 	}
@@ -101,7 +101,7 @@ func (r *cardMutationsResolver) Remove(ctx context.Context, obj *model.CardMutat
 				ID: payload.ID,
 			},
 		}
-		CardEvent(r.CardObservers, event)
+		CardEvent(r.CardObservers, event, r)
 
 		return item, nil
 	}
@@ -129,7 +129,7 @@ func (r *cardMutationsResolver) Flip(ctx context.Context, obj *model.CardMutatio
 					Flip: payload.Flip,
 				},
 			},
-		)
+			r)
 
 		return item, nil
 	}
@@ -155,7 +155,7 @@ func (r *cardMutationsResolver) Prio(ctx context.Context, obj *model.CardMutatio
 					ID:   payload.ID,
 					Prio: payload.Prio,
 				},
-			})
+			}, r)
 		return item, nil
 	}
 	return nil, fmt.Errorf("no card for id: %s", payload.ID)

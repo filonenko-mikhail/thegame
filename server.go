@@ -101,6 +101,9 @@ func serve(cmd *cobra.Command, args []string) error {
 		ChipObservers: sync.Map{},
 		IntuitionObservers: sync.Map{},
 		PingObservers: sync.Map{},
+
+		CardEventMutex: sync.Mutex{},
+		CardEvents: []*model.CardEvent{},
 	}
 	srv := handler.New(
 		generated.NewExecutableSchema(generated.
@@ -194,6 +197,11 @@ func serve(cmd *cobra.Command, args []string) error {
 	defer cancel()
 
     go graph.PingLoop(ctx, ticker, &resolver)
+
+	ticker = time.NewTicker(1 * time.Second)
+    ctx, cancel = context.WithCancel(context.Background())
+	defer cancel()
+	go graph.CardLoop(ctx, ticker, &resolver)
 
 	logrus.Printf("Listening tranformations http://%s", httpAddr)
 	return http.ListenAndServe(httpAddr, router)

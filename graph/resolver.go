@@ -3,6 +3,7 @@ package graph
 import (
 	"database/sql"
 	"sync"
+	"thegame/graph/model"
 )
 
 // This file will not be regenerated automatically.
@@ -23,4 +24,7 @@ type Resolver struct{
 	ChipObservers sync.Map
 	IntuitionObservers sync.Map
 	PingObservers sync.Map
+
+	CardEventMutex sync.Mutex
+	CardEvents []*model.CardEvent
 }
