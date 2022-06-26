@@ -46,41 +46,41 @@ class CardWidget extends StatelessWidget {
     Widget upButton = IconButton(
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(),
-      icon: const Icon(Icons.move_up, size: 12.0),
-      splashRadius: 12.0,
-      iconSize: 12.0,
+      icon: const Icon(Icons.move_up, size: 16.0),
+      splashRadius: 16.0,
+      iconSize: 16.0,
       onPressed: () {
         setPrio(key as ValueKey<String>, prio + 1);
       });
     Widget downButton = IconButton(
       padding: const EdgeInsets.all(2),
       constraints: const BoxConstraints(),
-      icon: const Icon(Icons.move_down, size: 12.0),
-      splashRadius: 12.0,
-      iconSize: 12.0,
+      icon: const Icon(Icons.move_down, size: 16.0),
+      splashRadius: 16.0,
+      iconSize: 16.0,
       onPressed: () {
         setPrio(key as ValueKey<String>, prio - 1);
       });
     
     final Widget removeButton = InkWell(
-      radius: 12.0,
+      radius: 16.0,
       borderRadius: BorderRadius.zero,
       child: Ink(
         padding: EdgeInsets.zero,
-        child: const Icon(Icons.close, size: 12.0),
+        child: const Icon(Icons.close, size: 16.0),
       ),
       onLongPress: () {
         remove(key as ValueKey<String>);
       });
     Widget flipButton = InkWell(
-      radius: 12.0,
+      radius: 16.0,
       borderRadius: BorderRadius.zero,
       onLongPress: () {
         triggerFlip(key as ValueKey<String>, !flip);
       },
       child: Ink(
         padding: EdgeInsets.zero,
-        child: const Icon(Icons.flip, size: 12.0),
+        child: const Icon(Icons.flip, size: 16.0),
       ),
       );
 

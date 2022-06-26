@@ -1,11 +1,4 @@
 
-import 'dart:async';
-
-import 'package:flutter/material.dart';
-import 'package:graphql/client.dart';
-
-import 'utils.dart';
-
 import 'package:json_annotation/json_annotation.dart' as js;
 
 part 'card_model.g.dart';

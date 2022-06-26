@@ -12,6 +12,7 @@ import 'package:uuid/uuid.dart';
 
 import '../model/utils.dart';
 import '../model/card_model.dart';
+import '../model/content_model.dart';
 
 var logger = Logger();
 
@@ -311,6 +312,17 @@ class MenuState extends State<MenuWidget> {
     fetch: FetchPolicy.noCache,
   );
 
+  Map<String, ContentModel> content = {};
+  Map<String, ContentModel> angel = {};
+  Map<String, ContentModel> physicalKnowing = {};
+  Map<String, ContentModel> emotionalKnowing = {};
+  Map<String, ContentModel> mentalKnowing = {};
+  Map<String, ContentModel> spiritKnowing = {};
+  Map<String, ContentModel> insight = {};
+  Map<String, ContentModel> setback = {};
+  Map<String, ContentModel> feedback = {};
+
+
   MenuState()
     : client=GraphQLClient(cache: GraphQLCache(), 
                            link: Connection.instance.link,
@@ -322,6 +334,72 @@ class MenuState extends State<MenuWidget> {
                               watchMutation: policies,
                             ),),
       super();
+
+  @override
+  void initState() {
+
+    final query = gql(r'''
+      query {
+        content {
+          list {
+            id
+            type
+            title
+            description
+          }
+        }
+      }
+    ''');
+
+    final QueryOptions options = QueryOptions(
+      document: query
+    );
+
+    client.query(options).then(handleContent);
+
+    super.initState();
+  }
+
+  void insertOrUpdateContentFromNetwork(element) {
+    ContentModel item = ContentModel.fromJson(element);
+    switch(item.type) {
+    case "ANGEL":
+      angel[item.id] = item;
+      break;
+    case "PHYSICAL_KNOWING":
+      physicalKnowing[item.id] = item;
+      break;
+    case "EMOTIONAL_KNOWING":
+      emotionalKnowing[item.id] = item;
+      break;
+    case "MENTAL_KNOWING":
+      mentalKnowing[item.id] = item;
+      break;
+    case "SPIRIT_KNOWING":
+      spiritKnowing[item.id] = item;
+      break;
+    case "INSIGHT":
+      insight[item.id] = item;
+      break;
+    case "SETBACK":
+      setback[item.id] = item;
+      break;
+    case "FEEDBACK":
+      feedback[item.id] = item;
+      break;
+    }
+      content[item.id] = item;
+  }
+
+  void handleContent(QueryResult result) {
+    if (result.hasException) {
+      logger.i(result.exception.toString());
+      return;
+    }
+
+    final List list = result.data?['content']['list'];    
+    list.forEach(insertOrUpdateContentFromNetwork);
+  }
 
   void addCardNetwork(CardModel model) async {
     final mutation = gql(r'''

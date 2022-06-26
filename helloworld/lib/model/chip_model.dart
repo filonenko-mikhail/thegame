@@ -1,10 +1,3 @@
-
-import 'dart:async';
-
-import 'package:graphql/client.dart';
-
-import 'utils.dart';
-
 import 'package:json_annotation/json_annotation.dart' as js;
 
 part 'chip_model.g.dart';
