@@ -221,4 +221,5 @@ type Subscription {
   card: CardEvent!
   chip: ChipEvent!
   intuition: Boolean!
+  ping: Boolean!
 }

@@ -387,6 +387,19 @@ func (r *subscriptionResolver) Intuition(ctx context.Context) (<-chan bool, erro
 	return msgs, nil
 }
 
+func (r *subscriptionResolver) Ping(ctx context.Context) (<-chan bool, error) {
+	id := uuid.NewString()
+	msgs := make(chan bool, 1)
+
+	go func() {
+		<-ctx.Done()
+		r.PingObservers.Delete(id)
+	}()
+	r.PingObservers.Store(id, msgs)
+
+	return msgs, nil
+}
+
 // CardMutations returns generated.CardMutationsResolver implementation.
 func (r *Resolver) CardMutations() generated.CardMutationsResolver { return &cardMutationsResolver{r} }
 

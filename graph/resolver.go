@@ -22,4 +22,5 @@ type Resolver struct{
 	CardObservers sync.Map
 	ChipObservers sync.Map
 	IntuitionObservers sync.Map
+	PingObservers sync.Map
 }

@@ -518,14 +518,12 @@ class MenuState extends State<MenuWidget> {
 
   // WEBSOCKET PUSH
   void onMessage(event) {
-    if (event.data.containsKey('card')) {
-      final Map card = event.data['card'];
-      if (card['add'] != null ) {
-        insertOrUpdateCardFromNetwork(card['add']);
-        setState(() {});
-      } else if (card['remove'] != null) {
-        field.remove(card['remove']['id']);
-      }
+    final Map card = event.data['card'];
+    if (card['add'] != null ) {
+      insertOrUpdateCardFromNetwork(card['add']);
+      setState(() {});
+    } else if (card['remove'] != null) {
+      field.remove(card['remove']['id']);
     }
   }
 

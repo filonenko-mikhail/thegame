@@ -6,6 +6,7 @@ import 'widget/dice.dart';
 import 'widget/intuition.dart';
 import 'widget/field.dart';
 import 'widget/menu.dart';
+import 'widget/status.dart';
 
 var logger = Logger();
 
@@ -105,10 +106,12 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
+          const StatusWidget(),
           PopupMenuButton(
             icon: const Icon(Icons.person),
+            iconSize: 20,
+            splashRadius: 20,
             onSelected: (value) {
-              //print the selected option
               if (value == "exit") {
                 setState(() {
                   isLogged = false;  

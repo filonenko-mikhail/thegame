@@ -210,6 +210,7 @@ type ComplexityRoot struct {
 		Chip      func(childComplexity int) int
 		Dice      func(childComplexity int) int
 		Intuition func(childComplexity int) int
+		Ping      func(childComplexity int) int
 	}
 }
 
@@ -264,6 +265,7 @@ type SubscriptionResolver interface {
 	Card(ctx context.Context) (<-chan *model.CardEvent, error)
 	Chip(ctx context.Context) (<-chan *model.ChipEvent, error)
 	Intuition(ctx context.Context) (<-chan bool, error)
+	Ping(ctx context.Context) (<-chan bool, error)
 }
 
 type executableSchema struct {
@@ -905,6 +907,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Subscription.Intuition(childComplexity), true
 
+	case "Subscription.ping":
+		if e.complexity.Subscription.Ping == nil {
+			break
+		}
+
+		return e.complexity.Subscription.Ping(childComplexity), true
+
 	}
 	return 0, false
 }
@@ -997,7 +1006,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "graph/schema.graphqls", Input: `# GraphQL schema example
+	{Name: "../schema.graphqls", Input: `# GraphQL schema example
 #
 # https://gqlgen.com/getting-started/
 
@@ -1220,6 +1229,7 @@ type Subscription {
   card: CardEvent!
   chip: ChipEvent!
   intuition: Boolean!
+  ping: Boolean!
 }
 `, BuiltIn: false},
 }
@@ -5409,17 +5419,21 @@ func (ec *executionContext) _Subscription_dice(ctx context.Context, field graphq
 		return nil
 	}
 	return func(ctx context.Context) graphql.Marshaler {
-		res, ok := <-resTmp.(<-chan int)
-		if !ok {
+		select {
+		case res, ok := <-resTmp.(<-chan int):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNInt2int(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
 			return nil
 		}
-		return graphql.WriterFunc(func(w io.Writer) {
-			w.Write([]byte{'{'})
-			graphql.MarshalString(field.Alias).MarshalGQL(w)
-			w.Write([]byte{':'})
-			ec.marshalNInt2int(ctx, field.Selections, res).MarshalGQL(w)
-			w.Write([]byte{'}'})
-		})
 	}
 }
 
@@ -5463,17 +5477,21 @@ func (ec *executionContext) _Subscription_card(ctx context.Context, field graphq
 		return nil
 	}
 	return func(ctx context.Context) graphql.Marshaler {
-		res, ok := <-resTmp.(<-chan *model.CardEvent)
-		if !ok {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.CardEvent):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNCardEvent2ᚖthegameᚋgraphᚋmodelᚐCardEvent(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
 			return nil
 		}
-		return graphql.WriterFunc(func(w io.Writer) {
-			w.Write([]byte{'{'})
-			graphql.MarshalString(field.Alias).MarshalGQL(w)
-			w.Write([]byte{':'})
-			ec.marshalNCardEvent2ᚖthegameᚋgraphᚋmodelᚐCardEvent(ctx, field.Selections, res).MarshalGQL(w)
-			w.Write([]byte{'}'})
-		})
 	}
 }
 
@@ -5529,17 +5547,21 @@ func (ec *executionContext) _Subscription_chip(ctx context.Context, field graphq
 		return nil
 	}
 	return func(ctx context.Context) graphql.Marshaler {
-		res, ok := <-resTmp.(<-chan *model.ChipEvent)
-		if !ok {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.ChipEvent):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNChipEvent2ᚖthegameᚋgraphᚋmodelᚐChipEvent(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
 			return nil
 		}
-		return graphql.WriterFunc(func(w io.Writer) {
-			w.Write([]byte{'{'})
-			graphql.MarshalString(field.Alias).MarshalGQL(w)
-			w.Write([]byte{':'})
-			ec.marshalNChipEvent2ᚖthegameᚋgraphᚋmodelᚐChipEvent(ctx, field.Selections, res).MarshalGQL(w)
-			w.Write([]byte{'}'})
-		})
 	}
 }
 
@@ -5591,21 +5613,83 @@ func (ec *executionContext) _Subscription_intuition(ctx context.Context, field g
 		return nil
 	}
 	return func(ctx context.Context) graphql.Marshaler {
-		res, ok := <-resTmp.(<-chan bool)
-		if !ok {
+		select {
+		case res, ok := <-resTmp.(<-chan bool):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNBoolean2bool(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
 			return nil
 		}
-		return graphql.WriterFunc(func(w io.Writer) {
-			w.Write([]byte{'{'})
-			graphql.MarshalString(field.Alias).MarshalGQL(w)
-			w.Write([]byte{':'})
-			ec.marshalNBoolean2bool(ctx, field.Selections, res).MarshalGQL(w)
-			w.Write([]byte{'}'})
-		})
 	}
 }
 
 func (ec *executionContext) fieldContext_Subscription_intuition(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_ping(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_ping(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().Ping(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		select {
+		case res, ok := <-resTmp.(<-chan bool):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalNBoolean2bool(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
+			return nil
+		}
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_ping(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Subscription",
 		Field:      field,
@@ -9063,6 +9147,8 @@ func (ec *executionContext) _Subscription(ctx context.Context, sel ast.Selection
 		return ec._Subscription_chip(ctx, fields[0])
 	case "intuition":
 		return ec._Subscription_intuition(ctx, fields[0])
+	case "ping":
+		return ec._Subscription_ping(ctx, fields[0])
 	default:
 		panic("unknown field " + strconv.Quote(fields[0].Name))
 	}

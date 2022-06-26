@@ -1,8 +1,10 @@
 package graph
 
 import (
+	"context"
 	"sync"
 	"thegame/graph/model"
+	"time"
 )
 
 
@@ -32,4 +34,18 @@ func IntuitionEvent(observers sync.Map, val bool) {
 		value.(chan bool) <- val
 		return true
 	})
+}
+
+func PingLoop(ctx context.Context, ticker *time.Ticker, resolver *Resolver) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			resolver.PingObservers.Range(func(key interface{}, value interface{}) bool {
+				value.(chan bool) <- true
+				return true
+			})
+		}
+	}
 }
