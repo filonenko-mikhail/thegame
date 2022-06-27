@@ -86,6 +86,8 @@ func serve(cmd *cobra.Command, args []string) error {
 	resolver := graph.Resolver{
 		Db: db,
 		Dice: 1,
+
+		PushMutex: sync.Mutex{},
 		Card: sync.Map{},
 		Intuition: true,
     	DiceObservers: sync.Map{},
@@ -189,11 +191,6 @@ func serve(cmd *cobra.Command, args []string) error {
 	defer cancel()
 
     go graph.PingLoop(ctx, ticker, &resolver)
-
-	ticker = time.NewTicker(1 * time.Second)
-    ctx, cancel = context.WithCancel(context.Background())
-	defer cancel()
-	go graph.CardLoop(ctx, ticker, &resolver)
 
 	logrus.Printf("Listening tranformations http://%s", httpAddr)
 	return http.ListenAndServe(httpAddr, router)

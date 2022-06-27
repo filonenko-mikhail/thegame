@@ -13,6 +13,8 @@ import (
 type Resolver struct{
 	Db *sql.DB
 	Dice int
+
+	PushMutex sync.Mutex
 	Card sync.Map // map[string]*model.Card
 	Chip sync.Map // map[string]*model.Card
 	Content sync.Map // map[string]*model.Content

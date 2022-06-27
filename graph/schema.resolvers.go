@@ -198,7 +198,7 @@ func (r *chipMutationsResolver) Add(ctx context.Context, obj *model.ChipMutation
 			Y:     payload.Y,
 			Color: payload.Color,
 		},
-	})
+	}, r)
 
 	return item, nil
 }
@@ -223,7 +223,7 @@ func (r *chipMutationsResolver) Move(ctx context.Context, obj *model.ChipMutatio
 				X:  payload.X,
 				Y:  payload.Y,
 			},
-		})
+		}, r)
 
 		return item, nil
 	}
@@ -245,7 +245,7 @@ func (r *chipMutationsResolver) Remove(ctx context.Context, obj *model.ChipMutat
 			Remove: &model.ChipRemoveEvent{
 				ID: payload.ID,
 			},
-		})
+		}, r)
 
 		return item, nil
 	}
@@ -279,7 +279,7 @@ func (r *contentQueriesResolver) List(ctx context.Context, obj *model.ContentQue
 func (r *diceMutationsResolver) Set(ctx context.Context, obj *model.DiceMutations, val int) (int, error) {
 	r.Dice = val
 
-	UpdateDice(r.DiceObservers, val)
+	UpdateDice(r.DiceObservers, val, r)
 
 	return r.Dice, nil
 }
@@ -291,7 +291,7 @@ func (r *diceQueriesResolver) Val(ctx context.Context, obj *model.DiceQueries) (
 func (r *intuitionMutationsResolver) Set(ctx context.Context, obj *model.IntuitionMutations, val bool) (bool, error) {
 	r.Intuition = val
 
-	IntuitionEvent(r.IntuitionObservers, val)
+	IntuitionEvent(r.IntuitionObservers, val, r)
 
 	return r.Intuition, nil
 }
@@ -338,11 +338,15 @@ func (r *queryResolver) Content(ctx context.Context) (*model.ContentQueries, err
 
 func (r *subscriptionResolver) Dice(ctx context.Context) (<-chan int, error) {
 	id := uuid.NewString()
-	msgs := make(chan int)
+	msgs := make(chan int, 1)
 
 	go func() {
 		<-ctx.Done()
+
+		r.PushMutex.Lock()
+		defer r.PushMutex.Unlock()
 		r.DiceObservers.Delete(id)
+		close(msgs)
 	}()
 	r.DiceObservers.Store(id, msgs)
 
@@ -351,11 +355,15 @@ func (r *subscriptionResolver) Dice(ctx context.Context) (<-chan int, error) {
 
 func (r *subscriptionResolver) Card(ctx context.Context) (<-chan *model.CardEvent, error) {
 	id := uuid.NewString()
-	msgs := make(chan *model.CardEvent)
+	msgs := make(chan *model.CardEvent, 1)
 
 	go func() {
 		<-ctx.Done()
-		r.DiceObservers.Delete(id)
+
+		r.PushMutex.Lock()
+		defer r.PushMutex.Unlock()
+		r.CardObservers.Delete(id)
+		close(msgs)
 	}()
 	r.CardObservers.Store(id, msgs)
 
@@ -364,11 +372,15 @@ func (r *subscriptionResolver) Card(ctx context.Context) (<-chan *model.CardEven
 
 func (r *subscriptionResolver) Chip(ctx context.Context) (<-chan *model.ChipEvent, error) {
 	id := uuid.NewString()
-	msgs := make(chan *model.ChipEvent)
+	msgs := make(chan *model.ChipEvent, 1)
 
 	go func() {
 		<-ctx.Done()
+
+		r.PushMutex.Lock()
+		defer r.PushMutex.Unlock()
 		r.ChipObservers.Delete(id)
+		close(msgs)
 	}()
 	r.ChipObservers.Store(id, msgs)
 
@@ -377,11 +389,15 @@ func (r *subscriptionResolver) Chip(ctx context.Context) (<-chan *model.ChipEven
 
 func (r *subscriptionResolver) Intuition(ctx context.Context) (<-chan bool, error) {
 	id := uuid.NewString()
-	msgs := make(chan bool)
+	msgs := make(chan bool, 1)
 
 	go func() {
 		<-ctx.Done()
+
+		r.PushMutex.Lock()
+		defer r.PushMutex.Unlock()
 		r.IntuitionObservers.Delete(id)
+		close(msgs)
 	}()
 	r.IntuitionObservers.Store(id, msgs)
 
@@ -390,11 +406,15 @@ func (r *subscriptionResolver) Intuition(ctx context.Context) (<-chan bool, erro
 
 func (r *subscriptionResolver) Ping(ctx context.Context) (<-chan bool, error) {
 	id := uuid.NewString()
-	msgs := make(chan bool)
+	msgs := make(chan bool, 1)
 
 	go func() {
 		<-ctx.Done()
+
+		r.PushMutex.Lock()
+		defer r.PushMutex.Unlock()
 		r.PingObservers.Delete(id)
+		close(msgs)
 	}()
 	r.PingObservers.Store(id, msgs)
 
