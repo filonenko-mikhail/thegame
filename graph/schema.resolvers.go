@@ -338,7 +338,7 @@ func (r *queryResolver) Content(ctx context.Context) (*model.ContentQueries, err
 
 func (r *subscriptionResolver) Dice(ctx context.Context) (<-chan int, error) {
 	id := uuid.NewString()
-	msgs := make(chan int, 1)
+	msgs := make(chan int, 100)
 
 	go func() {
 		<-ctx.Done()
@@ -351,7 +351,7 @@ func (r *subscriptionResolver) Dice(ctx context.Context) (<-chan int, error) {
 
 func (r *subscriptionResolver) Card(ctx context.Context) (<-chan *model.CardEvent, error) {
 	id := uuid.NewString()
-	msgs := make(chan *model.CardEvent, 1)
+	msgs := make(chan *model.CardEvent, 100)
 
 	go func() {
 		<-ctx.Done()
@@ -377,7 +377,7 @@ func (r *subscriptionResolver) Chip(ctx context.Context) (<-chan *model.ChipEven
 
 func (r *subscriptionResolver) Intuition(ctx context.Context) (<-chan bool, error) {
 	id := uuid.NewString()
-	msgs := make(chan bool, 1)
+	msgs := make(chan bool, 100)
 
 	go func() {
 		<-ctx.Done()
@@ -390,7 +390,7 @@ func (r *subscriptionResolver) Intuition(ctx context.Context) (<-chan bool, erro
 
 func (r *subscriptionResolver) Ping(ctx context.Context) (<-chan bool, error) {
 	id := uuid.NewString()
-	msgs := make(chan bool, 1)
+	msgs := make(chan bool, 100)
 
 	go func() {
 		<-ctx.Done()

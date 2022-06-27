@@ -42,15 +42,18 @@ func CardLoop(ctx context.Context, ticker *time.Ticker, resolver *Resolver) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			resolver.CardEventMutex.Lock()
-			defer resolver.CardEventMutex.Unlock()
 
+			resolver.CardEventMutex.Lock()
 			for _, cardEvent := range resolver.CardEvents {
 				resolver.CardObservers.Range(func (key interface{}, value interface{}) bool {
 					value.(chan *model.CardEvent) <- cardEvent
 					return true
 				})
 			}
+
+			resolver.CardEvents = []*model.CardEvent{}
+			resolver.CardEventMutex.Unlock()
+			
 		}
 	}
 }

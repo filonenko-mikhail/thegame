@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"database/sql"
+	"log"
 	"net/http"
+	"runtime"
 	"sync"
 	"thegame/graph"
 	"thegame/graph/generated"
@@ -24,6 +26,8 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+
+	_ "net/http/pprof"
 )
 
 
@@ -78,18 +82,6 @@ func serve(cmd *cobra.Command, args []string) error {
 	logrus.Print("Migrations applied")
 
 	router := chi.NewRouter()
-	// router.Use(cors.New(cors.Options{
-	// 	AllowedOrigins:   []string{"*", "http://localhost"},
-	// 	AllowCredentials: true,
-	// 	AllowedMethods: []string{"GET", "PATCH",
-	// 		"POST", 
-	// 		"CONNECT",
-	// 		"DELETE",
-	// 		"UPDATE",
-	// 		"PUT",
-	// 		"OPTIONS"},
-	// 	Debug:            false,
-	// }).Handler)
 
 	resolver := graph.Resolver{
 		Db: db,
@@ -213,6 +205,12 @@ func main() {
             logrus.Print(r)
         }
     }()
+
+	runtime.SetBlockProfileRate(1)
+	go func() {
+		log.Println(http.ListenAndServe("0.0.0.0:6060", nil))
+	}()
+	
 	var rootCmd = &cobra.Command{
 		Use:   "",
 		Short: "",
